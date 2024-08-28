@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-
+namespace L4d2ServerQuery.Model;
 
 public class FavoriteServerContext : DbContext
 {
