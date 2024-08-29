@@ -6,22 +6,29 @@ namespace L4d2ServerQuery.Service;
 
 public class ServerQueryService
 {
-    public List<ServerInformation>? Servers { get; set; }
-    
+    public List<ServerInformation> Servers { get; } = new();
+    private FavoriteServerContext _db = new();
 
-    public void Do()
+    public void UpdateServers()
     {
-        
+        List<FavoriteServer> servers = _db.FavoriteServers.ToList();
+        foreach (FavoriteServer server in servers)
+        {
+            ServerInformation serverInformation = new(server);
+            Servers.Add(serverInformation);
+        }
     }
-    
-    
+
+    public void AddServer(FavoriteServer server)
+    {
+        _db.FavoriteServers.Add(server);
+    }
 }
 
 public class ServerInformation
 {
-    private int _counter = 0;
-    
-    public FavoriteServer? FavoriteServer { get; set; } // 基础信息
+
+    private FavoriteServer _favoriteServer{ get; }
     private SteamQueryInformation? Information { get; set; } // 返回的查询信息
 
     private Timer _timer;
@@ -36,15 +43,13 @@ public class ServerInformation
 
     public ServerInformation(FavoriteServer favoriteServer)
     {
-        FavoriteServer = favoriteServer;
-        
+        _favoriteServer = favoriteServer;
+        InitializeTimer();
     }
 
-    public async void Do(object? state)
+    private async void Do(object? state)
     {
-        Console.WriteLine($"{_counter}th Do");
-        _counter++;
-        string host = FavoriteServer.Addr;
+        string host = _favoriteServer.Addr;
 
         var server = new GameServer(host);
 

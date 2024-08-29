@@ -5,9 +5,8 @@ namespace L4d2ServerQuery.Model;
 public class FavoriteServerContext : DbContext
 {
     public DbSet<FavoriteServer> FavoriteServers { get; set; }
-    // public DbSet<Post> Posts { get; set; }
 
-    public string DbPath { get; }
+    private string DbPath { get; }
 
     public FavoriteServerContext()
     {
@@ -34,4 +33,6 @@ public class FavoriteServer
     public string? Desc { get; set; }
 
     public string Addr => $"{Host}:{Port}";
+    
+    
 }
