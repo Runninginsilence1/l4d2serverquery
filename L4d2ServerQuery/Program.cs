@@ -1,3 +1,5 @@
+using L4d2ServerQuery.Model;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -44,7 +46,15 @@ app.MapGet("/hahaha", () => summaries[Random.Shared.Next(summaries.Length)])
 // 上面是测试用api
 // 下面是 服务器查询相关的api
 
+// 
 app.MapGet("/serverQuery", () =>
+    {
+        
+    })
+    .WithName("ServerQuery")
+    .WithOpenApi();
+
+app.MapGet("/serverAdd", () =>
     {
         var forecast = Enumerable.Range(1, 5).Select(index =>
                 new WeatherForecast
@@ -58,6 +68,10 @@ app.MapGet("/serverQuery", () =>
     })
     .WithName("ServerQuery")
     .WithOpenApi();
+
+app.MapGet("/serverUpdate", () => { });
+app.MapGet("/serverDelete", () => { });
+
 
 app.Run();
 
