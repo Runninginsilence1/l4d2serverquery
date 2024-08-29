@@ -1,0 +1,6 @@
+@L4d2ServerQuery_HostAddress = http://localhost:5129
+
+GET {{L4d2ServerQuery_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
