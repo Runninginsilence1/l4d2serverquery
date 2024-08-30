@@ -1,9 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace L4d2ServerQuery.Model;
 
 public class FavoriteServerContext : DbContext
 {
+    
     public DbSet<FavoriteServer> FavoriteServers { get; set; }
 
     private string DbPath { get; }
@@ -19,11 +21,14 @@ public class FavoriteServerContext : DbContext
     // special "local" folder for your platform.
     protected override void OnConfiguring(DbContextOptionsBuilder options)
         => options.UseSqlite($"Data Source={DbPath}");
+
+    
 }
 
 // 数据库实体
 public class FavoriteServer
 {
+    
     public int ServerId { get; set; }
     public DateTime CreateAt { get; set; }
     

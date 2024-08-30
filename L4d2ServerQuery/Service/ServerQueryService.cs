@@ -21,7 +21,7 @@ public class ServerQueryService
 
     public void AddServer(FavoriteServer server)
     {
-        _db.FavoriteServers.Add(server);
+        _db.Add(server);
     }
 }
 
@@ -39,7 +39,7 @@ public class ServerInformation
         // 例如，每5分钟执行一次 Do 方法
         _timer = new Timer(Do, this, TimeSpan.Zero, TimeSpan.FromSeconds(1));
     }
-    
+    private readonly FavoriteServerContext _dbCtx = new();
 
     public ServerInformation(FavoriteServer favoriteServer)
     {
@@ -58,6 +58,11 @@ public class ServerInformation
         Information = server.Information;
 
         server.Close();
+    }
+
+    public List<FavoriteServer> RawServers()
+    {
+        return _dbCtx.FavoriteServers.ToList();
     }
     
     public SteamQueryInformation? GetSteamQueryInformation() => Information;

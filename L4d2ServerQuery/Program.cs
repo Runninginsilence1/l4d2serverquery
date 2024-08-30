@@ -65,10 +65,6 @@ app.MapGet("/serverAdd", () =>
     .WithName("ServerAdd")
     .WithOpenApi();
 
-// app.MapGet("/serverUpdate", () => { });
-// app.MapGet("/serverDelete", () => { });
-
-
 app.Run();
 
 
