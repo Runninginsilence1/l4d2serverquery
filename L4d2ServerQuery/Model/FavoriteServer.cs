@@ -14,11 +14,12 @@ public class FavoriteServerContext : DbContext
     {
         var folder = Environment.SpecialFolder.LocalApplicationData;
         var path = Environment.GetFolderPath(folder);
-        DbPath = System.IO.Path.Join(path, "db.db");
+        DbPath = Path.Join(path, "db.db");
     }
 
     // The following configures EF to create a Sqlite database file in the
     // special "local" folder for your platform.
+    // 重写下面的方法, 使得EF可以创建SQLite数据库文件
     protected override void OnConfiguring(DbContextOptionsBuilder options)
         => options.UseSqlite($"Data Source={DbPath}");
 
@@ -38,6 +39,24 @@ public class FavoriteServer
     public string? Desc { get; set; }
 
     public string Addr => $"{Host}:{Port}";
+
+    public FavoriteServer()
+    {
+        
+    }
+
+    public FavoriteServer(string host, int port)
+    {
+        Host = host;
+        Port = port;
+        CreateAt = DateTime.Now;
+    }
     
-    
+    public FavoriteServer(string host, int port, string? desc)
+    {
+        Host = host;
+        Port = port;
+        CreateAt = DateTime.Now;
+        Desc = desc;
+    }
 }

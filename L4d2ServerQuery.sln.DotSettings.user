@@ -3,6 +3,6 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestTemplateMapping/=MSTest/@EntryIndexedValue">d6790ab7-33c2-4425-b2c9-51480cd1a852</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=4ed14b1c_002D4c24_002D4bb6_002Dab3e_002Dad83cdd794fb/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="METHOD" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;MSTest::35B53E25-268F-4BAD-A7AB-4692C9DC2DF0::net8.0::L4d2ServerQuery.Tests.Service.ServerQueryServiceTest.METHOD&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;MSTest::35B53E25-268F-4BAD-A7AB-4692C9DC2DF0::net8.0::L4d2ServerQuery.Tests.Service.ServerQueryServiceTest&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

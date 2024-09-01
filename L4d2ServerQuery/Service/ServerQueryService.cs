@@ -4,6 +4,9 @@ using SteamQuery.Models;
 
 namespace L4d2ServerQuery.Service;
 
+// 思路是: 维护一个自己有定时器来执行查询的类列表.
+// 这样我只要获取List, 就能获取到所有的实时的服务器信息.
+
 public class ServerQueryService
 {
     public List<ServerInformation> Servers { get; } = new();
@@ -25,7 +28,7 @@ public class ServerQueryService
     }
 }
 
-public class ServerInformation
+public class ServerInformation: IDisposable, IAsyncDisposable
 {
 
     private FavoriteServer _favoriteServer{ get; }
@@ -36,7 +39,6 @@ public class ServerInformation
     private void InitializeTimer()
     {
         // 设置定时器的间隔时间和回调函数
-        // 例如，每5分钟执行一次 Do 方法
         _timer = new Timer(Do, this, TimeSpan.Zero, TimeSpan.FromSeconds(1));
     }
     private readonly FavoriteServerContext _dbCtx = new();
@@ -66,4 +68,16 @@ public class ServerInformation
     }
     
     public SteamQueryInformation? GetSteamQueryInformation() => Information;
+
+    public void Dispose()
+    {
+        _timer.Dispose();
+        _dbCtx.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _timer.DisposeAsync();
+        await _dbCtx.DisposeAsync();
+    }
 }

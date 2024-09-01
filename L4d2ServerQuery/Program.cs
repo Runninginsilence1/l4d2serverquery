@@ -20,6 +20,7 @@ var db = new FavoriteServerContext();
 
 app.UseHttpsRedirection();
 
+// 全局变量
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
