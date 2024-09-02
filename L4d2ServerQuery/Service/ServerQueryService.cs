@@ -25,6 +25,7 @@ public class ServerQueryService
     public void AddServer(FavoriteServer server)
     {
         _db.Add(server);
+        _db.SaveChanges();
     }
 }
 

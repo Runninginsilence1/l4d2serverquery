@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace L4d2ServerQuery.Model;
@@ -24,13 +25,21 @@ public class FavoriteServerContext : DbContext
         => options.UseSqlite($"Data Source={DbPath}");
 
     
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        
+    }
 }
 
 // 数据库实体
+
+[Keyless]
 public class FavoriteServer
 {
     
-    public int ServerId { get; set; }
+    // public int Id { get; set; } // 主键按照约定, 名字一般要叫 classNameId 或者 直接 Id
+    public int ServerId { get; set; } // 或者通过 Key 属性来指定主键
     public DateTime CreateAt { get; set; }
     
     public string Host { get; set; }
