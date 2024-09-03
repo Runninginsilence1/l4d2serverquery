@@ -54,21 +54,26 @@ app.MapGet("/hahaha", () => summaries[Random.Shared.Next(summaries.Length)])
 // 下面是 服务器查询相关的api
 
 var serverQueryService = new ServerQueryService();
+serverQueryService.UpdateServers();
 
+
+// 获取服务器信息
+// 
+app.MapGet("/test", () =>
+    {
+    
+        var res = serverQueryService.Servers.ToList();
+        return res;
+    })
+    .WithName("Test")
+    .WithOpenApi();
+
+
+// CRUD api
 app.MapGet("/favoriteServers", (FavoriteServerContext db) => db.FavoriteServers.ToList())
     .WithName("FavoriteServers")
     .WithOpenApi();
 
-// 
-app.MapGet("/serverQuery", () =>
-    {
-        serverQueryService.UpdateServers();
-        return serverQueryService.Servers.ToList();
-    })
-    .WithName("ServerQuery")
-    .WithOpenApi();
-
-// todo: application/json 作为请求类型
 // 似乎直接在 lambda 表达式中指定参数就可以了
 app.MapPost("/serverAdd", async (FavoriteServer server, FavoriteServerContext db) =>
     {

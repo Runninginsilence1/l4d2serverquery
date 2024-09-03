@@ -7,26 +7,34 @@ namespace L4d2ServerQuery.Service;
 // 思路是: 维护一个自己有定时器来执行查询的类列表.
 // 这样我只要获取List, 就能获取到所有的实时的服务器信息.
 
+// 这个类里面的数据库查询是可以正常查找到数据的;
 public class ServerQueryService
 {
-    public List<ServerInformation> Servers { get; } = new();
+    public List<ServerInformation> Servers { get; set; } = new();
     private FavoriteServerContext _db = new();
 
     public void UpdateServers()
     {
         List<FavoriteServer> servers = _db.FavoriteServers.ToList();
+        Console.WriteLine($"UpdateServers 中, 收到{servers.Count}个服务器");
+        if (servers.Count > 0)
+        {
+            var favoriteServer = servers[0];
+            Console.WriteLine(favoriteServer.ToString());
+        }
+
+        Servers.Clear();
+
+        Servers = servers.Select(server => new ServerInformation(server)).ToList();
+        
         foreach (FavoriteServer server in servers)
         {
             ServerInformation serverInformation = new(server);
             Servers.Add(serverInformation);
         }
     }
-
-    public void AddServer(FavoriteServer server)
-    {
-        _db.Add(server);
-        _db.SaveChanges();
-    }
+    
+    
 }
 
 public class ServerInformation: IDisposable, IAsyncDisposable
@@ -50,15 +58,22 @@ public class ServerInformation: IDisposable, IAsyncDisposable
         InitializeTimer();
     }
 
+    // fixme: 定时器的执行问题: await 并没有更新字段的 Information 的值;
     private async void Do(object? state)
     {
+        
         string host = _favoriteServer.Addr;
-
+        
+        // Console.WriteLine($"{DateTime.Now}: 更新了Infomation");
+        
         var server = new GameServer(host);
 
-        await server.PerformQueryAsync();
+         server.PerformQueryAsync().GetAwaiter().GetResult(); // 阻塞的调用
 
         Information = server.Information;
+        
+        Console.WriteLine($"{DateTime.Now}: 更新了Infomation");
+
 
         server.Close();
     }
