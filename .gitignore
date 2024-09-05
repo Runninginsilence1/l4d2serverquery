@@ -7,6 +7,9 @@
 
 .idea/
 
+
+
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
@@ -112,3 +115,4 @@ $RECYCLE.BIN/
 
 **/bin
 **/obj
+**/Migrations

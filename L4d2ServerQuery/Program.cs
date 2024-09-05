@@ -57,15 +57,26 @@ var serverQueryService = new ServerQueryService();
 serverQueryService.UpdateServers();
 
 
-// 获取服务器信息
 // 
-app.MapGet("/test", () =>
+// 
+app.MapGet("/queryServerInfo", () =>
     {
-    
-        var res = serverQueryService.Servers.ToList();
-        return res;
+        List<ServerInformation> res = serverQueryService.GetServersRealTime();
+        foreach (var item in res)
+        {
+            
+        }
+
+        Results.Ok(res);
     })
-    .WithName("Test")
+    .WithName("QueryServerInfo")
+    .WithOpenApi();
+
+app.MapGet("/updateServerInfo", () =>
+    {
+        serverQueryService.UpdateServers();
+    })
+    .WithName("UpdateServerInfo")
     .WithOpenApi();
 
 

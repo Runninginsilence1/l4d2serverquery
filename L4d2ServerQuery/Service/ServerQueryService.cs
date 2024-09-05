@@ -10,72 +10,85 @@ namespace L4d2ServerQuery.Service;
 // 这个类里面的数据库查询是可以正常查找到数据的;
 public class ServerQueryService
 {
-    public List<ServerInformation> Servers { get; set; } = new();
+    private List<ServerInformation> Servers { get; set; } = new();
     private FavoriteServerContext _db = new();
 
+    public ServerQueryService()
+    {
+        UpdateServers();
+    }
+
+    // 从数据库中获取最新的服务器列表, 然后重新更新 Servers 列表;
     public void UpdateServers()
     {
+        Servers.Clear();
         List<FavoriteServer> servers = _db.FavoriteServers.ToList();
         Console.WriteLine($"UpdateServers 中, 收到{servers.Count}个服务器");
         if (servers.Count > 0)
         {
-            var favoriteServer = servers[0];
-            Console.WriteLine(favoriteServer.ToString());
-        }
-
-        Servers.Clear();
-
-        Servers = servers.Select(server => new ServerInformation(server)).ToList();
-        
-        foreach (FavoriteServer server in servers)
-        {
-            ServerInformation serverInformation = new(server);
-            Servers.Add(serverInformation);
+            Servers = servers.Select(server => new ServerInformation(server)).ToList();
         }
     }
-    
-    
+
+    public List<ServerInformation> GetServersRealTime() => Servers;
+
 }
 
-public class ServerInformation: IDisposable, IAsyncDisposable
+public class ServerInformation
 {
-
-    private FavoriteServer _favoriteServer{ get; }
-    private SteamQueryInformation? Information { get; set; } // 返回的查询信息
-
-    private Timer _timer;
     
-    private void InitializeTimer()
+    // 使用 task 的cancelltoken 取消定时器的执行;
+    private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+    private readonly FavoriteServer _favoriteServer;
+    private SteamQueryInformation? Information { get; set; } // 返回的查询信息
+    
+    
+    // 定义查询的异步任务
+    // 异步查询, 更新字段, 然后关闭连接
+    public async Task GetServerDataAsync()
     {
-        // 设置定时器的间隔时间和回调函数
-        _timer = new Timer(Do, this, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+        var gameServer = new GameServer(_favoriteServer.Addr);
+        
+        Console.WriteLine($"准备尝试获取服务器信息, 底层ID: {_favoriteServer.Id}");
+
+        // {
+        //     await gameServer.PerformQueryAsync(); // 按道理来说这里应该有一个 cancellationToken 取消的功能;
+        //     Information = gameServer.Information;            
+        // }
+        
+        Console.WriteLine($"获取服务器信息成功, 底层ID: {_favoriteServer.Id}");
+        
+        gameServer.Close();
     }
+    
+    // 启动后台任务
+    public void StartRefreshing()
+    {
+        Task.Run(async () =>
+        {
+            while (!_cts.Token.IsCancellationRequested)
+            {
+                Console.WriteLine("循环在运行");
+                // test: 是否是你阻塞了
+                await GetServerDataAsync();
+                await Task.Delay(TimeSpan.FromSeconds(1), _cts.Token);
+            }
+        });
+    }
+    
+    // 停止后台任务
+    public void StopRefreshing()
+    {
+        _cts.Cancel();
+    }
+    
+    
     private readonly FavoriteServerContext _dbCtx = new();
 
     public ServerInformation(FavoriteServer favoriteServer)
     {
         _favoriteServer = favoriteServer;
-        InitializeTimer();
-    }
-
-    // fixme: 定时器的执行问题: await 并没有更新字段的 Information 的值;
-    private async void Do(object? state)
-    {
-        
-        string host = _favoriteServer.Addr;
-        
-        // Console.WriteLine($"{DateTime.Now}: 更新了Infomation");
-        
-        var server = new GameServer(host);
-
-         server.PerformQueryAsync().GetAwaiter().GetResult(); // 阻塞的调用
-
-        Information = server.Information;
-        
-        Console.WriteLine($"{DateTime.Now}: 更新了Infomation");
-
-
-        server.Close();
+        StartRefreshing();
     }
 
     public List<FavoriteServer> RawServers()
@@ -83,17 +96,7 @@ public class ServerInformation: IDisposable, IAsyncDisposable
         return _dbCtx.FavoriteServers.ToList();
     }
     
+    
     public SteamQueryInformation? GetSteamQueryInformation() => Information;
 
-    public void Dispose()
-    {
-        _timer.Dispose();
-        _dbCtx.Dispose();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _timer.DisposeAsync();
-        await _dbCtx.DisposeAsync();
-    }
 }

@@ -11,7 +11,22 @@
 全部都是基于 .NET 的官方技术栈, 数据库使用SQLite, Web 使用最小API. 
 平台基于DOTNET8.
 
+## 数据库设计
+
+一张表即可.
+
+注意自动迁移的命令:
+```shell
+dotnet ef migrations add InitialCreate
+dotnet ef database update
+```
+
+
+## 问题
+
+妈的现在没有一个服务器能用啊
+
 # 用于测试用的服务器列表
-- 卧槽, 喵都
+- 我去, 喵都!
     - 42.192.4.35:42300
 - 待定
