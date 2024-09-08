@@ -62,11 +62,6 @@ serverQueryService.UpdateServers();
 app.MapGet("/queryServerInfo", () =>
     {
         List<ServerInformation> res = serverQueryService.GetServersRealTime();
-        foreach (var item in res)
-        {
-            
-        }
-
         Results.Ok(res);
     })
     .WithName("QueryServerInfo")

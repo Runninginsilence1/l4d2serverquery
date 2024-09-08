@@ -1,4 +1,5 @@
-﻿using L4d2ServerQuery.Model;
+﻿using System.Text.Json.Serialization;
+using L4d2ServerQuery.Model;
 using SteamQuery;
 using SteamQuery.Models;
 
@@ -24,6 +25,7 @@ public class ServerQueryService
         Servers.Clear();
         List<FavoriteServer> servers = _db.FavoriteServers.ToList();
         Console.WriteLine($"UpdateServers 中, 收到{servers.Count}个服务器");
+        
         if (servers.Count > 0)
         {
             Servers = servers.Select(server => new ServerInformation(server)).ToList();
@@ -38,9 +40,11 @@ public class ServerInformation
 {
     
     // 使用 task 的cancelltoken 取消定时器的执行;
-    private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+    private readonly CancellationTokenSource _cts = new ();
     private readonly FavoriteServer _favoriteServer;
     private SteamQueryInformation? Information { get; set; } // 返回的查询信息
+    
+    private string _mapName;
     
     
     // 定义查询的异步任务
@@ -51,14 +55,29 @@ public class ServerInformation
         
         Console.WriteLine($"准备尝试获取服务器信息, 底层ID: {_favoriteServer.Id}");
 
-        // {
-        //     await gameServer.PerformQueryAsync(); // 按道理来说这里应该有一个 cancellationToken 取消的功能;
-        //     Information = gameServer.Information;            
-        // }
+        try
+        {
+            await gameServer.PerformQueryAsync(); // 按道理来说这里应该有一个 cancellationToken 取消的功能;
+            Information = gameServer.Information;
+            
+        }
+        catch (TimeoutException)
+        {
+            Console.WriteLine($"{_favoriteServer.Addr} 超时");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"{_favoriteServer.Addr} 其他错误: {e.Message}");
+        }
+        finally
+        {
+            gameServer.Close();
+        }
         
-        Console.WriteLine($"获取服务器信息成功, 底层ID: {_favoriteServer.Id}");
+        Console.WriteLine($"到达async之后 底层ID: {_favoriteServer.Id}, 当前地图: {Information?.Map ?? "Unknown"}");
+        _mapName = Information?.Map ?? "Unknown";
         
-        gameServer.Close();
+        
     }
     
     // 启动后台任务
@@ -71,7 +90,7 @@ public class ServerInformation
                 Console.WriteLine("循环在运行");
                 // test: 是否是你阻塞了
                 await GetServerDataAsync();
-                await Task.Delay(TimeSpan.FromSeconds(1), _cts.Token);
+                await Task.Delay(TimeSpan.FromSeconds(3), _cts.Token);
             }
         });
     }
