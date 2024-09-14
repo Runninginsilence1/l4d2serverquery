@@ -26,15 +26,9 @@ public class ServerQueryServiceTest
         for (int i = 0; i < 5; i++)
         {
             Thread.Sleep(1000);
-            if (serverInformation.GetSteamQueryInformation() == null)
-            {
-                Console.WriteLine("Server is offline.");
-            }
-            else
-            {
-                Console.WriteLine($"Information {serverInformation.GetSteamQueryInformation().OnlinePlayers}:");
-
-            }
+            Console.WriteLine(serverInformation.GetSteamQueryInformation() == null
+                ? "Server is offline."
+                : $"Information {serverInformation.GetSteamQueryInformation()?.OnlinePlayers}:");
         }
     }
 }

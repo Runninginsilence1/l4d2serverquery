@@ -68,7 +68,7 @@ public class ServerInformation: IDisposable, IAsyncDisposable
         
         var server = new GameServer(host);
 
-         server.PerformQueryAsync().GetAwaiter().GetResult(); // 阻塞的调用
+        server.PerformQueryAsync().GetAwaiter().GetResult(); // 阻塞的调用
 
         Information = server.Information;
         
