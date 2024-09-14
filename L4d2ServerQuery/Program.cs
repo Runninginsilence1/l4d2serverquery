@@ -23,51 +23,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// 全局变量
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-    {
-        // Enumerable.Range(1, 5) 用于生成1到5的数字序列, 特别好用
-
-        // Select 使用 Linq 语法, 用于将序列中的每个元素映射到一个新值, 这里我们生成了5个 WeatherForecast 对象
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)), // 用索引生成日期
-                    Random.Shared.Next(-20, 55), // 生成随机数
-                    summaries[Random.Shared.Next(summaries.Length)] // 在数组内随机取一个值作为结果
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast")
-    .WithOpenApi();
-
-app.MapGet("/hahaha", () => summaries[Random.Shared.Next(summaries.Length)])
-    .WithName("hahaha")
-    .WithOpenApi();
-
-// 上面是测试用api
-// 下面是 服务器查询相关的api
-
-var serverQueryService = new ServerQueryService();
-serverQueryService.UpdateServers();
-
-
-// 获取服务器信息
-// 
-app.MapGet("/test", () =>
-    {
-    
-        var res = serverQueryService.Servers.ToList();
-        return res;
-    })
-    .WithName("Test")
-    .WithOpenApi();
 
 
 // CRUD api
