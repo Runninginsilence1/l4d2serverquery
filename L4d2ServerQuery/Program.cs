@@ -4,6 +4,18 @@ using SteamQuery;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 添加 CORS 服务
+builder.Services.AddCors(options =>
+{
+    // 允许所有来源
+    options.AddPolicy(name: "AllowAllOrigins",
+        policyBuilder => policyBuilder
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+});
+
+
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -21,9 +33,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 
+// app.UseHttpsRedirection();
 
+app.UseCors("AllowAllOrigins");
 
 // CRUD api
 app.MapGet("/favoriteServers", (FavoriteServerContext db) => db.FavoriteServers.ToList())
@@ -81,7 +94,7 @@ app.MapGet("/serverList", async (FavoriteServerContext db) =>
                     }));
 
                 
-            }
+        }
         await Task.WhenAll(tasks);
             
             var result =status.OrderBy(s => Math.Abs(s.OnlinePlayers - 8)).ToList();
