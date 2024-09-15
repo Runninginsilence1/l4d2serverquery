@@ -43,7 +43,7 @@ public class FavoriteServer
     
     public int Id { get; set; } // 主键按照约定, 名字一般要叫 classNameId 或者 直接 Id
     // public int ServerId { get; set; } // 或者通过 Key 属性来指定主键
-    public DateTime CreateAt { get;  } = DateTime.Now;
+    public DateTime CreateAt { get; set; } = DateTime.Now;
     
     [Required]
     public string Host { get; set; }

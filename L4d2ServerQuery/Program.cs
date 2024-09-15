@@ -33,6 +33,7 @@ app.MapGet("/favoriteServers", (FavoriteServerContext db) => db.FavoriteServers.
 // 似乎直接在 lambda 表达式中指定参数就可以了
 app.MapPost("/serverAdd", async (FavoriteServer server, FavoriteServerContext db) =>
     {
+        server.CreateAt = DateTime.Now;
         db.FavoriteServers.Add(server);
         await db.SaveChangesAsync();
         return Results.Ok();
@@ -44,9 +45,10 @@ app.MapGet("/serverList", async (FavoriteServerContext db) =>
     {
         var servers = db.FavoriteServers.ToList();
         var status = new List<ServerStatus>();
-        
-            foreach (var server in servers)
-            {
+        var tasks = new List<Task>();
+
+        foreach (var server in servers)
+        {
 
                 var host = server.Addr;
                 var gameServer = new GameServer(host)
@@ -55,34 +57,35 @@ app.MapGet("/serverList", async (FavoriteServerContext db) =>
                     ReceiveTimeout = 1000,
                 };
                 
-                try
-                {
-                    var info = await gameServer.GetInformationAsync();
-                    var s = new ServerStatus()
+                    tasks.Add(Task.Run(async () =>
                     {
-                        Address = host,
+                        try
+                        {
+                            var info = await gameServer.GetInformationAsync();
+                            var s = new ServerStatus()
+                            {
+                                Address = host,
+                                ServerName = info.ServerName,
+                                Map = info.Map,
+                                OnlinePlayers = info.OnlinePlayers,
+                                MaxPlayers = info.MaxPlayers,
+                            };
 
-                        ServerName = info.ServerName,
-                        Map = info.Map,
-                        OnlinePlayers = info.OnlinePlayers,
-                        MaxPlayers = info.MaxPlayers,
-                    };
+                            status.Add(s);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine($"{host} 无法连接");
+                        }
+                        
+                    }));
 
-                    status.Add(s);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"{host} 无法连接");
-                }
                 
-                
-
-                
-
             }
+        await Task.WhenAll(tasks);
             
-            return Results.Ok(status);
-        
+            var result =status.OrderBy(s => Math.Abs(s.OnlinePlayers - 8)).ToList();
+            return Results.Ok(result);
     })
     .WithName("ServerList")
     .WithOpenApi();
