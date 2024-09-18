@@ -1,6 +1,6 @@
 ﻿# 用于求生服务器信息查询的基于ASP.NET的最小API
 
-我很喜欢C#这门语言, 同时这个功能也是我现在所需要的. 本着边学习边实践来写这个项目.
+我很喜欢CSharp这门语言, 同时这个功能也是我现在所需要的. 本着边学习边实践来写这个项目.
 
 # Features(v1.0)
 - 实时查询服务器列表的信息, 不需要手动点击什么刷新按钮什么的来实现
@@ -23,8 +23,17 @@ dotnet ef database update
 
 
 ## 问题
+配置文件问题
 
-妈的现在没有一个服务器能用啊
+那么前端访问的地址:
+
+
+
+## 部署
+dotnet publish --configuration Release
+
+指定启动的url
+dotnet L4d2ServerQuery.dll --urls "http://*:6000"
 
 # 用于测试用的服务器列表
 - 我去, 喵都!

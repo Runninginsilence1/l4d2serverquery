@@ -1,3 +1,4 @@
+using System.Buffers;
 using L4d2ServerQuery.Model;
 using L4d2ServerQuery.Service;
 using SteamQuery;
@@ -14,7 +15,6 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()
             .AllowAnyHeader());
 });
-
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -39,6 +39,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAllOrigins");
 
 // CRUD api
+
 app.MapGet("/favoriteServers", (FavoriteServerContext db) => db.FavoriteServers.ToList())
     .WithName("FavoriteServers")
     .WithOpenApi();
@@ -53,6 +54,16 @@ app.MapPost("/serverAdd", async (FavoriteServer server, FavoriteServerContext db
     })
     .WithName("ServerAdd")
     .WithOpenApi();
+
+// 标准的删除步骤
+app.MapDelete("/serverDelete/{id}", async (int id, FavoriteServerContext db) =>
+{
+    var server = await db.FavoriteServers.FindAsync(id);
+    if (server == null) return Results.NotFound();
+    db.FavoriteServers.Remove(server);
+    await db.SaveChangesAsync();
+    return Results.Ok();
+});
 
 app.MapGet("/serverList", async (FavoriteServerContext db) =>
     {
@@ -96,8 +107,10 @@ app.MapGet("/serverList", async (FavoriteServerContext db) =>
                 
         }
         await Task.WhenAll(tasks);
+        
+        const int expectedPlayers = 8;
             
-            var result =status.OrderBy(s => Math.Abs(s.OnlinePlayers - 8)).ToList();
+            var result =status.OrderBy(s => Math.Abs(s.OnlinePlayers - expectedPlayers)).ToList();
             return Results.Ok(result);
     })
     .WithName("ServerList")
@@ -113,5 +126,3 @@ app.MapGet("/serverList", async (FavoriteServerContext db) =>
 
 
 app.Run();
-
-
