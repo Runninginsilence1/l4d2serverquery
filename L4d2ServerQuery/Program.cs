@@ -58,11 +58,20 @@ app.MapPost("/serverAdd", async (FavoriteServer server, FavoriteServerContext db
 // 标准的删除步骤
 app.MapDelete("/serverDelete/{id}", async (int id, FavoriteServerContext db) =>
 {
-    var server = await db.FavoriteServers.FindAsync(id);
-    if (server == null) return Results.NotFound();
-    db.FavoriteServers.Remove(server);
-    await db.SaveChangesAsync();
-    return Results.Ok();
+    // 从数据库中查询: 查询单个数据使用 single, 使用 lambda 表达式来指定条件
+    // 注意处理 NotFound异常
+    try
+    {
+        FavoriteServer server = db.FavoriteServers.Single(s => s.Id == id);
+        db.Remove(server);
+        await db.SaveChangesAsync();
+        return Results.Ok();
+    }
+    catch (InvalidOperationException e)
+    {
+        return Results.NotFound();
+    }
+    
 });
 
 app.MapGet("/serverList", async (FavoriteServerContext db) =>
@@ -71,47 +80,48 @@ app.MapGet("/serverList", async (FavoriteServerContext db) =>
         var status = new List<ServerStatus>();
         var tasks = new List<Task>();
 
+        var count = 0;
+
         foreach (var server in servers)
         {
+            var host = server.Addr;
+            var gameServer = new GameServer(host)
+            {
+                SendTimeout = 1000,
+                ReceiveTimeout = 1000,
+            };
 
-                var host = server.Addr;
-                var gameServer = new GameServer(host)
+            tasks.Add(Task.Run(async () =>
+            {
+                try
                 {
-                    SendTimeout = 1000,
-                    ReceiveTimeout = 1000,
-                };
-                
-                    tasks.Add(Task.Run(async () =>
+                    var info = await gameServer.GetInformationAsync();
+                    count++;
+                    var s = new ServerStatus()
                     {
-                        try
-                        {
-                            var info = await gameServer.GetInformationAsync();
-                            var s = new ServerStatus()
-                            {
-                                Address = host,
-                                ServerName = info.ServerName,
-                                Map = info.Map,
-                                OnlinePlayers = info.OnlinePlayers,
-                                MaxPlayers = info.MaxPlayers,
-                            };
-
-                            status.Add(s);
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine($"{host} 无法连接");
-                        }
-                        
-                    }));
-
-                
+                        Id = server.Id,
+                        Address = host,
+                        ServerName = info.ServerName,
+                        Map = info.Map,
+                        OnlinePlayers = info.OnlinePlayers,
+                        MaxPlayers = info.MaxPlayers,
+                    };
+                    
+                    status.Add(s);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"{host} 无法连接");
+                }
+            }));
         }
+
         await Task.WhenAll(tasks);
-        
+
         const int expectedPlayers = 8;
-            
-            var result =status.OrderBy(s => Math.Abs(s.OnlinePlayers - expectedPlayers)).ToList();
-            return Results.Ok(result);
+
+        var result = status.OrderBy(s => Math.Abs(s.OnlinePlayers - expectedPlayers)).ToList();
+        return Results.Ok(result);
     })
     .WithName("ServerList")
     .WithOpenApi();
@@ -122,7 +132,6 @@ app.MapGet("/serverList", async (FavoriteServerContext db) =>
     var DbPath = Path.Join(path, "db.db");
     Console.WriteLine($"数据库的路径在: {DbPath}");
 }
-
 
 
 app.Run();

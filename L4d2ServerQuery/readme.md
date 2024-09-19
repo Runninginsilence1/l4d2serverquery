@@ -31,11 +31,21 @@ dotnet ef database update
 
 ## 部署
 dotnet publish --configuration Release
+在你执行该目录的位置的指定位置的
+.\bin\Release\net8.0\publish
 
 指定启动的url
 dotnet L4d2ServerQuery.dll --urls "http://*:6000"
 
-# 用于测试用的服务器列表
-- 我去, 喵都!
-    - 42.192.4.35:42300
-- 待定
+
+前端打包并把 dist 文件放上去
+
+/etc/nginx/nginx.conf
+
+# 迭代
+后端实时上传；通过task实现；
+后端使用MSTest框架进行单元测试
+
+前端：打包部署一气呵成；
+
+死妈华为云找个防火墙找半天
