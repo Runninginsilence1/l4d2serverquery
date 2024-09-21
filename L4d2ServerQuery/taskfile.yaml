@@ -1,0 +1,15 @@
+version: "3"
+
+env:
+  DOTNET_RELEASE_PATH: bin/Release/net8.0/publish
+
+tasks:
+  build:
+    cmds:
+      - echo "Building..."
+  
+  release:
+    cmds:
+      - dotnet publish --configuration Release
+      - scp -r bin/Release/net8.0/publish/* root@121.37.157.126:/var/www/backend
+      - echo "Release Complete!"

@@ -55,6 +55,12 @@ public class FavoriteServer
     public string? Desc { get; set; }
 
     public string Addr => $"{Host}:{Port}";
+    
+    // 关联
+    // 可空类型表示外键关联不是必须的
+    public int? TagId { get; set; }
+    public Tag? Tag { get; set; } 
+    
 
     public FavoriteServer()
     {

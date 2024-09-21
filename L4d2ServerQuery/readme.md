@@ -48,4 +48,27 @@ dotnet L4d2ServerQuery.dll --urls "http://*:6000"
 
 前端：打包部署一气呵成；
 
+部署干脆也使用 supervisor好了， 那个东西蛮方便的
+
 死妈华为云找个防火墙找半天
+
+
+# 通过task实现自动上传
+
+```yaml
+version: "3"
+
+env: 
+  DOTNET_RELEASE_PATH: bin/Release/net8.0/publish
+
+tasks:
+  build:
+    cmds:
+      - echo "Building..."
+        
+  release:
+    cmds:
+      - dotnet publish --configuration Release
+      - scp -r bin/Release/net8.0/publish/* root@121.37.157.126:/var/www/zzk
+      - echo "Release Complete!"
+```
