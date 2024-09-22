@@ -52,6 +52,11 @@ dotnet L4d2ServerQuery.dll --urls "http://*:6000"
 
 死妈华为云找个防火墙找半天
 
+# 迁移管理
+增加tag model的迁移
+dotnet ef migrations add AddTagModel
+
+
 
 # 通过task实现自动上传
 

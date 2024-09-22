@@ -2,6 +2,7 @@ using System.Buffers;
 using L4d2ServerQuery.Model;
 using L4d2ServerQuery.Service;
 using SteamQuery;
+using SteamQuery.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -142,11 +143,23 @@ app.MapGet("/serverList/{id}", async (int? id, TagContext db, FavoriteServerCont
         foreach (var server in servers)
         {
             var host = server.Addr;
-            var gameServer = new GameServer(host)
+
+            GameServer gameServer;
+
+            try
             {
-                SendTimeout = 1000,
-                ReceiveTimeout = 1000,
-            };
+                gameServer = new GameServer(host)
+                {
+                    SendTimeout = 1000,
+                    ReceiveTimeout = 1000,
+                };
+            }
+            catch (AddressNotFoundException e)
+            {
+                Console.WriteLine($"{host} 是一个无效的地址");
+                continue;
+            }
+            
 
             tasks.Add(Task.Run(async () =>
             {
