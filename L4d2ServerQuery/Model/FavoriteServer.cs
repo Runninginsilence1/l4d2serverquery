@@ -14,26 +14,26 @@ dotnet ef migrations add InitialCreate
 dotnet ef database update
  * 
  */
-public class FavoriteServerContext : DbContext
-{
-    
-    public DbSet<FavoriteServer> FavoriteServers { get; set; }
-
-    private string DbPath { get; }
-
-    public FavoriteServerContext()
-    {
-        var folder = Environment.SpecialFolder.LocalApplicationData;
-        var path = Environment.GetFolderPath(folder);
-        DbPath = Path.Join(path, "db.db");
-    }
-
-    // The following configures EF to create a Sqlite database file in the
-    // special "local" folder for your platform.
-    // 重写下面的方法, 使得EF可以创建SQLite数据库文件
-    protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseSqlite($"Data Source={DbPath}");
-}
+// public class FavoriteServerContext : DbContext
+// {
+//     
+//     public DbSet<FavoriteServer> FavoriteServers { get; set; }
+//
+//     private string DbPath { get; }
+//
+//     public FavoriteServerContext()
+//     {
+//         var folder = Environment.SpecialFolder.LocalApplicationData;
+//         var path = Environment.GetFolderPath(folder);
+//         DbPath = Path.Join(path, "db.db");
+//     }
+//
+//     // The following configures EF to create a Sqlite database file in the
+//     // special "local" folder for your platform.
+//     // 重写下面的方法, 使得EF可以创建SQLite数据库文件
+//     protected override void OnConfiguring(DbContextOptionsBuilder options)
+//         => options.UseSqlite($"Data Source={DbPath}");
+// }
 
 // 数据库实体
 
@@ -55,6 +55,10 @@ public class FavoriteServer
     public string? Desc { get; set; }
 
     public string Addr => $"{Host}:{Port}";
+
+
+    public string? Field1 { get; set; }
+    public string? Field2 { get; set; }
     
     // 关联
     // 可空类型表示外键关联不是必须的

@@ -9,4 +9,5 @@
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;MSTest::35B53E25-268F-4BAD-A7AB-4692C9DC2DF0::net8.0::L4d2ServerQuery.Tests.Service.ServerQueryServiceTest&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
-&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
+&lt;/SessionState&gt;</s:String>
+	</wpf:ResourceDictionary>

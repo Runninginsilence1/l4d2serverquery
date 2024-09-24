@@ -18,29 +18,29 @@ public class Tag(string name)
     
 }
 
-public sealed class TagContext : DbContext
-{
-    
-    public DbSet<Tag> Tags { get; set; }
-
-    private string DbPath { get; }
-
-    public TagContext()
-    {
-        var folder = Environment.SpecialFolder.LocalApplicationData;
-        var path = Environment.GetFolderPath(folder);
-        DbPath = Path.Join(path, "db.db");
-
-        // Console.WriteLine("尝试迁移表 Tag");
-        // var ensureDeleted = Database.EnsureDeleted();
-        // Console.WriteLine($"Deleted: {ensureDeleted}");
-        // var ensureCreated = Database.EnsureCreated();
-        // Console.WriteLine($"Created: {ensureCreated}");
-    }
-
-    // The following configures EF to create a Sqlite database file in the
-    // special "local" folder for your platform.
-    // 重写下面的方法, 使得EF可以创建SQLite数据库文件
-    protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseSqlite($"Data Source={DbPath}");
-}
+// public sealed class TagContext : DbContext
+// {
+//     
+//     public DbSet<Tag> Tags { get; set; }
+//
+//     private string DbPath { get; }
+//
+//     public TagContext()
+//     {
+//         var folder = Environment.SpecialFolder.LocalApplicationData;
+//         var path = Environment.GetFolderPath(folder);
+//         DbPath = Path.Join(path, "db.db");
+//
+//         // Console.WriteLine("尝试迁移表 Tag");
+//         // var ensureDeleted = Database.EnsureDeleted();
+//         // Console.WriteLine($"Deleted: {ensureDeleted}");
+//         // var ensureCreated = Database.EnsureCreated();
+//         // Console.WriteLine($"Created: {ensureCreated}");
+//     }
+//
+//     // The following configures EF to create a Sqlite database file in the
+//     // special "local" folder for your platform.
+//     // 重写下面的方法, 使得EF可以创建SQLite数据库文件
+//     protected override void OnConfiguring(DbContextOptionsBuilder options)
+//         => options.UseSqlite($"Data Source={DbPath}");
+// }
