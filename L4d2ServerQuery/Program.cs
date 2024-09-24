@@ -1,10 +1,16 @@
 using System.Buffers;
+using L4d2ServerQuery;
 using L4d2ServerQuery.Model;
 using L4d2ServerQuery.Service;
+using Serilog;
 using SteamQuery;
 using SteamQuery.Exceptions;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
+
+Init();
 
 // 添加 CORS 服务
 builder.Services.AddCors(options =>
@@ -200,8 +206,15 @@ app.MapGet("/serverList/{id}", async (int? id, TagContext db, FavoriteServerCont
     var folder = Environment.SpecialFolder.LocalApplicationData;
     var path = Environment.GetFolderPath(folder);
     var DbPath = Path.Join(path, "db.db");
-    Console.WriteLine($"数据库的路径在: {DbPath}");
+    Log.Information($"数据库的路径在: {DbPath}");
 }
 
 
 app.Run();
+
+
+void Init()
+{
+    Console.WriteLine("调用了Init");
+MyLogger.Init();    
+}

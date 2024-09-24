@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace L4d2ServerQuery.Helper;
 
 /// <summary>
@@ -7,10 +9,27 @@ public static class BackupHelper
 {
     public static string FilePath = "servers.json";
     
-    public static void Import()
+    public static List<ImportModel> Import()
     {
-        string readAllText = File.ReadAllText(FilePath);
         
+        var importModels = new List<ImportModel>();
+
+
+        if (!File.Exists(FilePath))
+        {
+            File.Create(FilePath).Close();
+            return importModels;
+        }
+        var readAllLines = File.ReadAllLines(FilePath);
+
+
+        foreach (var line in readAllLines)
+        {
+            var importModel = new ImportModel(line);
+                importModels.Add(importModel);
+        }
+
+        return importModels;
     }
     
     public static void Export()
@@ -19,7 +38,19 @@ public static class BackupHelper
     }
 }
 
-public class ServerIntoJson
+
+/// <summary>
+/// 用于导出的模型
+/// </summary>
+public class ImportModel
 {
-    
+    public ImportModel(string addr)
+    {
+        var lastIndexOf = addr.LastIndexOf(":", StringComparison.Ordinal);
+        Host = addr.Substring(0, lastIndexOf);
+        Host = addr.Substring(lastIndexOf, addr.Length);
+    }
+
+    public string Host { get; set; }
+    public int Port { get; set; }
 }
