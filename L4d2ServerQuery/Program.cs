@@ -55,13 +55,13 @@ using (var scope = app.Services.CreateScope())
     var migrations = pendingMigrations as string[] ?? pendingMigrations.ToArray();
     if (migrations.Any())
     {
-        // throw new Exception("存在没有迁移的数据库");
-        Log.Error("存在没有迁移的数据库:");
-        foreach (string migration in migrations)
-        {
-            Log.Warning($"{migration} 未迁移");
-        }
-        Environment.Exit(1);
+        throw new Exception("存在没有迁移的数据库");
+        // Log.Error("存在没有迁移的数据库:");
+        // foreach (string migration in migrations)
+        // {
+        //     Log.Warning($"{migration} 未迁移");
+        // }
+        // Environment.Exit(1);
     }
 }
 
@@ -260,14 +260,6 @@ app.MapGet("/serverList/{id}", async (int? id, ServerContext db) =>
     .WithName("ServerList")
     .WithOpenApi();
 
-{
-    var folder = Environment.SpecialFolder.LocalApplicationData;
-    var path = Environment.GetFolderPath(folder);
-    var DbPath = Path.Join(path, "db.db");
-    Log.Information($"数据库的路径在: {DbPath}");
-}
-
-
 app.Run();
 
 
@@ -275,4 +267,14 @@ void Init()
 {
     Console.WriteLine("调用了Init");
     MyLogger.Init();
+    
+    PrintDbPath();
+}
+
+void PrintDbPath()
+{
+    var folder = Environment.SpecialFolder.LocalApplicationData;
+    var path = Environment.GetFolderPath(folder);
+    var DbPath = Path.Join(path, "db.db");
+    Log.Information($"数据库的路径在: {DbPath}");   
 }
