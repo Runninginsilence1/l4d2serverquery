@@ -14,6 +14,7 @@ public class Tag(string name)
     [MaxLength(255)]
     public string Name { get; set; } = name;
     
+    public int RankSort { get; set; } // 排序, 越靠近这个值, 排名越高
     
     public ICollection<FavoriteServer> Servers { get; } = new List<FavoriteServer>();
     

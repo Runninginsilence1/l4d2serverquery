@@ -23,6 +23,7 @@ Init();
 
 
 // 可能上面那种方法不在 最小化api上适用
+// 使用这种配置成功!
 builder.Services.ConfigureHttpJsonOptions(options =>
     {
         options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -169,20 +170,18 @@ app.MapGet("/favoriteServers", (ServerContext db) =>
 // 可选：指定tag的id
 app.MapPost("/serverAdd", async (FavoriteServer server, ServerContext db) =>
     {
+        server.CreateAt = DateTime.Now;
         Tag tag;
         try
         {
             tag = db.Tags.Single(s => s.Id == server.TagId);
+            tag.Servers.Add(server);
         }
         catch (InvalidOperationException e)
         {
-            return Results.NotFound();
+            Log.Information($"{server.Addr}没有添加tag, 默认直接添加");
+            db.FavoriteServers.Add(server);
         }
-        
-        
-        server.CreateAt = DateTime.Now;
-        server.Tag = tag; 
-        db.FavoriteServers.Add(server);
         await db.SaveChangesAsync();
         Log.Information($"添加了新的服务器, 当前服务器数量为: {db.FavoriteServers.Count()}");
         return Results.Ok();
@@ -215,18 +214,26 @@ app.MapGet("/serverList/{id}", async (int? id, ServerContext db) =>
     {
         List<FavoriteServer> servers;
 
-        if (id == null)
+        if (id is null or 0)
         {
             servers = db.FavoriteServers.ToList();
         }
         else
         {
             // 可能会有没有找到的异常
-            var single = db.Tags.Single(t => t.Id == id);
-            servers = single.Servers.ToList();
+            try
+            {
+                var single = db.Tags.Single(t => t.Id == id);
+                servers = single.Servers.ToList();
+            }
+            catch (InvalidOperationException e)
+            {
+                Console.WriteLine(e);
+                return Results.NotFound();
+            }
         }
 
-        var status = new List<ServerStatus>();
+        var status = new List<ServerStatusDto>();
         var tasks = new List<Task>();
         var count = 0;
 
@@ -243,13 +250,14 @@ app.MapGet("/serverList/{id}", async (int? id, ServerContext db) =>
             {
                 gameServer = new GameServer(host)
                 {
-                    SendTimeout = 1000,
-                    ReceiveTimeout = 1000,
+                    SendTimeout = 3000,
+                    ReceiveTimeout = 3000,
                 };
             }
             catch (AddressNotFoundException e)
             {
-                Console.WriteLine($"{host} 是一个无效的地址");
+                // Console.WriteLine($"{host} 是一个无效的地址");
+                Log.Warning($"{host} 是一个无效的地址");
                 continue;
             }
 
@@ -260,15 +268,19 @@ app.MapGet("/serverList/{id}", async (int? id, ServerContext db) =>
                 {
                     var info = await gameServer.GetInformationAsync();
                     count++;
-                    var s = new ServerStatus()
-                    {
-                        Id = server.Id,
-                        Address = host,
-                        ServerName = info.ServerName,
-                        Map = info.Map,
-                        OnlinePlayers = info.OnlinePlayers,
-                        MaxPlayers = info.MaxPlayers,
-                    };
+                    
+                    
+                    // var s = new ServerStatusDto()
+                    // {
+                    //     Id = server.Id,
+                    //     Address = host,
+                    //     ServerName = info.ServerName,
+                    //     Map = info.Map,
+                    //     OnlinePlayers = info.OnlinePlayers,
+                    //     MaxPlayers = info.MaxPlayers,
+                    // };
+
+                    var s = new ServerStatusDto(server, info);
 
                     status.Add(s);
                 }
