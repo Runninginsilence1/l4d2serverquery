@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
@@ -63,6 +64,7 @@ public class FavoriteServer
     // 关联
     // 可空类型表示外键关联不是必须的
     public int? TagId { get; set; }
+    // [JsonIgnore] // 这个只能是临时解决办法, 我就是要双向查询
     public Tag? Tag { get; set; } 
     
 

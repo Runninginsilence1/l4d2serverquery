@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace L4d2ServerQuery.Model;
@@ -12,6 +13,7 @@ public class Tag(string name)
     [Required]
     [MaxLength(255)]
     public string Name { get; set; } = name;
+    
     
     public ICollection<FavoriteServer> Servers { get; } = new List<FavoriteServer>();
     

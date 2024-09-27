@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 using L4d2ServerQuery;
 using L4d2ServerQuery.Data;
 using L4d2ServerQuery.Model;
@@ -14,6 +15,20 @@ var builder = WebApplication.CreateBuilder(args);
 
 Init();
 
+// 尝试解决 json 的循环引用的问题
+// 我总觉得这个玩意没有生效
+// builder.Services.AddControllers()
+//     .AddJsonOptions(option => 
+//         option.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+
+
+// 可能上面那种方法不在 最小化api上适用
+builder.Services.ConfigureHttpJsonOptions(options =>
+    {
+        options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    }
+);
+
 
 // 添加 CORS 服务
 builder.Services.AddCors(options =>
@@ -25,6 +40,8 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()
             .AllowAnyHeader());
 });
+
+
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -41,11 +58,14 @@ builder.Services.AddDbContext<ServerContext>();
 
 var app = builder.Build();
 
+
+
 using (var scope = app.Services.CreateScope())
 {
 // handle db context
 
     var context = scope.ServiceProvider.GetRequiredService<ServerContext>();
+    
 
     // 最好不要在这里迁移
     // await context.Database.MigrateAsync();
@@ -84,7 +104,9 @@ app.UseCors("AllowAllOrigins");
 
 
 {
-    app.MapGet("/getAllTags", (ServerContext db) => db.Tags.ToList())
+    app.MapGet("/getAllTags", (ServerContext db) => db.Tags.
+            Include(t => t.Servers).
+            ToList())
         .WithName("GetAllTags")
         .WithOpenApi();
 
@@ -128,7 +150,16 @@ app.UseCors("AllowAllOrigins");
 
 app.MapGet("/favoriteServers", (ServerContext db) =>
     {
-        var res =db.FavoriteServers.Include(s => s.Tag).ToList();
+        var res = db.FavoriteServers.Include(s => s.Tag).ToList();
+
+
+        // 直接适用关键的方式来查询
+        // var query = from s in db.FavoriteServers
+        //     join t in db.Tags on s.TagId equals t.Id
+        //     select new {s, t};
+        //
+        // var res = query.ToList();
+        
         return Results.Ok(res);
     })
     .WithName("FavoriteServers")
