@@ -1,14 +1,17 @@
 using System.Buffers;
 using System.Diagnostics;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using L4d2ServerQuery;
 using L4d2ServerQuery.Data;
 using L4d2ServerQuery.Model;
+using L4d2ServerQuery.Request;
 using L4d2ServerQuery.Service;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using SteamQuery;
 using SteamQuery.Exceptions;
+using TagList = L4d2ServerQuery.Request.TagList;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,8 +45,6 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader());
 });
 
-
-
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -59,31 +60,44 @@ builder.Services.AddDbContext<ServerContext>();
 
 var app = builder.Build();
 
-
-
 using (var scope = app.Services.CreateScope())
 {
 // handle db context
 
     var context = scope.ServiceProvider.GetRequiredService<ServerContext>();
-    
 
-    // 最好不要在这里迁移
-    // await context.Database.MigrateAsync();
+    
+    // 使用代码完成迁移
+    {
+        // 最好不要在这里迁移
+        // await context.Database.MigrateAsync();
+    
+    }
 
     // 而是检查有没有待迁移的内容
-    var pendingMigrations = context.Database.GetPendingMigrations();
-    var migrations = pendingMigrations as string[] ?? pendingMigrations.ToArray();
-    if (migrations.Any())
-    {
-        throw new Exception("存在没有迁移的数据库");
-        // Log.Error("存在没有迁移的数据库:");
-        // foreach (string migration in migrations)
-        // {
-        //     Log.Warning($"{migration} 未迁移");
-        // }
-        // Environment.Exit(1);
-    }
+    // {
+    //     var pendingMigrations = context.Database.GetPendingMigrations();
+    //     var migrations = pendingMigrations as string[] ?? pendingMigrations.ToArray();
+    //     if (migrations.Any())
+    //     {
+    //         throw new Exception("存在没有迁移的数据库");
+    //         // Log.Error("存在没有迁移的数据库:");
+    //         // foreach (string migration in migrations)
+    //         // {
+    //         //     Log.Warning($"{migration} 未迁移");
+    //         // }
+    //         // Environment.Exit(1);
+    //     }    
+    // }
+
+    // {
+    //     context.Database.EnsureDeleted();
+    //     context.Database.EnsureCreated();    
+    // }
+    
+    // 自动重建然后删除表
+    
+
 }
 
 
@@ -103,15 +117,13 @@ app.UseCors("AllowAllOrigins");
 
 // tag api
 
-
+// 使用 restful api 风格的路由
 {
-    app.MapGet("/getAllTags", (ServerContext db) => db.Tags.
-            Include(t => t.Servers).
-            ToList())
+    app.MapGet("/tags", (ServerContext db) => db.Tags.Select(t => new {t.Id, t.Name}))
         .WithName("GetAllTags")
         .WithOpenApi();
-
-    app.MapPost("/addTag", async (Tag tag, ServerContext db) =>
+    
+    app.MapPost("/tags/add", async (Tag tag, ServerContext db) =>
         {
             tag.CreateAt = DateTime.Now;
             db.Tags.Add(tag);
@@ -120,11 +132,17 @@ app.UseCors("AllowAllOrigins");
         })
         .WithName("AddTag")
         .WithOpenApi();
-
-// 标准的删除步骤
-// 删除tag时将所有包含有该tag的server的tag也删除
-// efcore 给出的示例是， 直接将对应的导航字段设置为 null, 然后保存即可
-    app.MapDelete("/deleteTag/{id}", async (int id, ServerContext db) =>
+    
+    // 这个实际上是新增服务器的时候应该绑定的, 写在tag的api这里了
+    app.MapPost("/tag/add", (TagList tagList) =>
+    {
+        IEnumerable<Tag> tags = tagList.Tags.Select(t => new Tag(t));
+        Log.Information("尝试解析Tag");
+        string serialize = JsonSerializer.Serialize(tags);
+        Console.WriteLine(serialize);
+    });
+    
+    app.MapDelete("/deleteTag/{id:int}", async (int id, ServerContext db) =>
     {
         // 从数据库中查询: 查询单个数据使用 single, 使用 lambda 表达式来指定条件
         // 注意处理 NotFound异常
@@ -141,14 +159,15 @@ app.UseCors("AllowAllOrigins");
             await db.SaveChangesAsync();
             return Results.Ok();
         }
-        catch (InvalidOperationException e)
+        catch (InvalidOperationException)
         {
             return Results.NotFound();
         }
-    });
+    });    
+
 }
 
-
+// 测试接口, 显示所有的服务器数据
 app.MapGet("/favoriteServers", (ServerContext db) =>
     {
         var res = db.FavoriteServers.Include(s => s.Tag).ToList();
@@ -168,8 +187,10 @@ app.MapGet("/favoriteServers", (ServerContext db) =>
 
 // 似乎直接在 lambda 表达式中指定 参数就可以了
 // 可选：指定tag的id
-app.MapPost("/serverAdd", async (FavoriteServer server, ServerContext db) =>
+app.MapPost("/serverAdd", async (AddServerRequest request, ServerContext db) =>
     {
+        var server = new FavoriteServer();
+
         server.CreateAt = DateTime.Now;
         Tag tag;
         try
@@ -202,7 +223,7 @@ app.MapDelete("/serverDelete/{id}", async (int id, ServerContext db) =>
         Log.Information($"删除了新的服务器, 当前服务器数量为: {db.FavoriteServers.Count()}");
         return Results.Ok();
     }
-    catch (InvalidOperationException e)
+    catch (InvalidOperationException)
     {
         return Results.NotFound();
     }
@@ -233,71 +254,7 @@ app.MapGet("/serverList/{id}", async (int? id, ServerContext db) =>
             }
         }
 
-        var status = new List<ServerStatusDto>();
-        var tasks = new List<Task>();
-        var count = 0;
-
-
-        stopwatch.Restart();
-
-        foreach (var server in servers)
-        {
-            var host = server.Addr;
-
-            GameServer gameServer;
-
-            try
-            {
-                gameServer = new GameServer(host)
-                {
-                    SendTimeout = 3000,
-                    ReceiveTimeout = 3000,
-                };
-            }
-            catch (AddressNotFoundException e)
-            {
-                // Console.WriteLine($"{host} 是一个无效的地址");
-                Log.Warning($"{host} 是一个无效的地址");
-                continue;
-            }
-
-
-            tasks.Add(Task.Run(async () =>
-            {
-                try
-                {
-                    var info = await gameServer.GetInformationAsync();
-                    count++;
-                    
-                    
-                    // var s = new ServerStatusDto()
-                    // {
-                    //     Id = server.Id,
-                    //     Address = host,
-                    //     ServerName = info.ServerName,
-                    //     Map = info.Map,
-                    //     OnlinePlayers = info.OnlinePlayers,
-                    //     MaxPlayers = info.MaxPlayers,
-                    // };
-
-                    var s = new ServerStatusDto(server, info);
-
-                    status.Add(s);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"{host} 无法连接");
-                }
-            }));
-        }
-
-        await Task.WhenAll(tasks);
-
-        const int expectedPlayers = 8;
-
-        var result = status.OrderBy(s => Math.Abs(s.OnlinePlayers - expectedPlayers)).ToList();
-        stopwatch.Stop();
-        Console.WriteLine($"查询了 {count} 个服务器, 用时: {stopwatch.ElapsedMilliseconds} ms");
+        var result = await QueryService.Query(servers);
         return Results.Ok(result);
     })
     .WithName("ServerList")
@@ -318,6 +275,6 @@ void PrintDbPath()
 {
     var folder = Environment.SpecialFolder.LocalApplicationData;
     var path = Environment.GetFolderPath(folder);
-    var DbPath = Path.Join(path, "db.db");
-    Log.Information($"数据库的路径在: {DbPath}");   
+    var dbPath = Path.Join(path, "db.db");
+    Log.Information($"数据库的路径在: {dbPath}");   
 }

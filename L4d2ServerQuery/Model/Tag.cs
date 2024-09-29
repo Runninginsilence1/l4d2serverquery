@@ -17,8 +17,6 @@ public class Tag(string name)
     public int RankSort { get; set; } // 排序, 越靠近这个值, 排名越高
     
     public ICollection<FavoriteServer> Servers { get; } = new List<FavoriteServer>();
-    
-    
 }
 
 // public sealed class TagContext : DbContext
