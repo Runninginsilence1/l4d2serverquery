@@ -120,7 +120,7 @@ app.UseCors("AllowAllOrigins");
 // 使用 restful api 风格的路由
 {
     app.MapGet("/tags", (ServerContext db) => db.Tags.Select(t => new {t.Id, t.Name}))
-        .WithName("GetAllTags")
+        .WithName("获取所有标签")
         .WithOpenApi();
     
     app.MapPost("/tags/add", async (Tag tag, ServerContext db) =>
@@ -130,10 +130,11 @@ app.UseCors("AllowAllOrigins");
             await db.SaveChangesAsync();
             return Results.Ok();
         })
-        .WithName("AddTag")
+        .WithName("新增标签")
         .WithOpenApi();
     
     // 这个实际上是新增服务器的时候应该绑定的, 写在tag的api这里了
+    // 这个没有api文档
     app.MapPost("/tag/add", (TagList tagList) =>
     {
         IEnumerable<Tag> tags = tagList.Tags.Select(t => new Tag(t));
@@ -168,7 +169,7 @@ app.UseCors("AllowAllOrigins");
 }
 
 // 测试接口, 显示所有的服务器数据
-app.MapGet("/favoriteServers", (ServerContext db) =>
+app.MapGet("/servers", (ServerContext db) =>
     {
         var res = db.FavoriteServers.Include(s => s.Tag).ToList();
 
@@ -182,14 +183,15 @@ app.MapGet("/favoriteServers", (ServerContext db) =>
         
         return Results.Ok(res);
     })
-    .WithName("FavoriteServers")
+    .WithName("查询所有服务器")
     .WithOpenApi();
 
 // 似乎直接在 lambda 表达式中指定 参数就可以了
 // 可选：指定tag的id
-app.MapPost("/serverAdd", async (AddServerRequest request, ServerContext db) =>
+app.MapPost("/servers/add", async (AddServerRequest request, ServerContext db) =>
     {
-        var server = new FavoriteServer();
+        var server = new FavoriteServer(request);
+        Log.Information($"待添加的服务器信息: {server}");
 
         server.CreateAt = DateTime.Now;
         Tag tag;
@@ -207,7 +209,7 @@ app.MapPost("/serverAdd", async (AddServerRequest request, ServerContext db) =>
         Log.Information($"添加了新的服务器, 当前服务器数量为: {db.FavoriteServers.Count()}");
         return Results.Ok();
     })
-    .WithName("ServerAdd")
+    .WithName("增加服务器")
     .WithOpenApi();
 
 // 标准的删除步骤
@@ -227,7 +229,8 @@ app.MapDelete("/serverDelete/{id}", async (int id, ServerContext db) =>
     {
         return Results.NotFound();
     }
-});
+})
+.WithName("删除服务器");
 
 var stopwatch = new Stopwatch();
 
@@ -257,7 +260,7 @@ app.MapGet("/serverList/{id}", async (int? id, ServerContext db) =>
         var result = await QueryService.Query(servers);
         return Results.Ok(result);
     })
-    .WithName("ServerList")
+    .WithName("查询服务器列表")
     .WithOpenApi();
 
 app.Run();

@@ -25,3 +25,8 @@ public class ServerStatusDto
         MaxPlayers = information?.MaxPlayers?? 0;
     }
 }
+
+public class TagDto
+{
+    
+}

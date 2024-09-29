@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using L4d2ServerQuery.Request;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
@@ -73,6 +74,15 @@ public class FavoriteServer
         
     }
 
+
+    public FavoriteServer(AddServerRequest request)
+    {
+        int lastIndexOf = request.Addr.LastIndexOf(":", StringComparison.Ordinal);
+        Host = request.Addr.Substring(0, lastIndexOf);
+        Port = int.Parse(request.Addr.Substring(lastIndexOf + 1));
+        
+        Desc = request.Desc;
+    }
     public FavoriteServer(string host, int port)
     {
         Host = host;
