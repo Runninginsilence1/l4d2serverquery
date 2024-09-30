@@ -23,4 +23,6 @@ public class ServerContext: DbContext
     // 重写下面的方法, 使得EF可以创建SQLite数据库文件
     protected override void OnConfiguring(DbContextOptionsBuilder options)
         => options.UseSqlite($"Data Source={DbPath}");
+    
+    
 }

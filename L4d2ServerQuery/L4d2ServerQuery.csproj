@@ -21,6 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Data\ValueGenerators\" />
       <Folder Include="DTO\" />
       <Folder Include="Migrations\" />
     </ItemGroup>

@@ -200,17 +200,29 @@ app.MapPost("/servers/add", async (AddServerRequest request, ServerContext db) =
         Log.Information($"待添加的服务器信息: {server}");
 
         server.CreateAt = DateTime.Now;
-        Tag tag;
-        try
+
+        foreach (int tagId in request.Tags)
         {
-            tag = db.Tags.Single(s => s.Id == server.TagId);
-            tag.Servers.Add(server);
+            try
+            {
+                Tag tag;
+                tag = db.Tags.Single(s => s.Id == tagId);
+                tag.Servers.Add(server);
+            }
+            catch (InvalidOperationException)
+            {
+                Log.Information($"{server.Addr}没有添加tag, 默认直接添加");
+                db.FavoriteServers.Add(server);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"出现了未知的异常: {e.Message}");
+                throw;
+            }
+
         }
-        catch (InvalidOperationException e)
-        {
-            Log.Information($"{server.Addr}没有添加tag, 默认直接添加");
-            db.FavoriteServers.Add(server);
-        }
+        
+        
         await db.SaveChangesAsync();
         Log.Information($"添加了新的服务器, 当前服务器数量为: {db.FavoriteServers.Count()}");
         return Results.Ok();
