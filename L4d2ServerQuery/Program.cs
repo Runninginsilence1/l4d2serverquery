@@ -90,10 +90,10 @@ using (var scope = app.Services.CreateScope())
     //     }    
     // }
 
-    // {
-    //     context.Database.EnsureDeleted();
-    //     context.Database.EnsureCreated();    
-    // }
+    {
+        context.Database.EnsureDeleted();
+        context.Database.EnsureCreated();    
+    }
     
     // 自动重建然后删除表
     
@@ -123,9 +123,15 @@ app.UseCors("AllowAllOrigins");
         .WithName("获取所有标签")
         .WithOpenApi();
     
-    app.MapPost("/tags/add", async (Tag tag, ServerContext db) =>
+    app.MapPost("/tags/add", async (TagRequest request, ServerContext db) =>
         {
-            tag.CreateAt = DateTime.Now;
+            var tag = new Tag(request.Name)
+            {
+                CreateAt = DateTime.Now,
+                // Name = request.Name,
+                RankSort = request.RankSort
+            };
+            
             db.Tags.Add(tag);
             await db.SaveChangesAsync();
             return Results.Ok();
