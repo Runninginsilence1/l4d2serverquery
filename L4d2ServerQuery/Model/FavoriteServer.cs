@@ -43,12 +43,13 @@ dotnet ef database update
 public class FavoriteServer
 {
     
+    [Key]
     public int Id { get; set; } // 主键按照约定, 名字一般要叫 classNameId 或者 直接 Id
     // public int ServerId { get; set; } // 或者通过 Key 属性来指定主键
     public DateTime CreateAt { get; set; } = DateTime.Now;
     
     [Required]
-    public string Host { get; set; }
+    public string? Host { get; set; }
     [Required]
     public int Port { get; set; }
     
@@ -57,10 +58,9 @@ public class FavoriteServer
     public string? Desc { get; set; }
 
     public string Addr => $"{Host}:{Port}";
-
-
-    public string? Field1 { get; set; }
-    public string? Field2 { get; set; }
+    
+    // 最后连接时间，用于作为排序的依据
+    public DateTime LastQueryAt { get; set; }
     
     // 关联
     // 可空类型表示外键关联不是必须的
@@ -71,6 +71,15 @@ public class FavoriteServer
 
     public FavoriteServer()
     {
+        
+    }
+
+    // 导入json实现迁移
+    public FavoriteServer(FavoriteServerJson json)
+    {
+        Host = json.Host;
+        Port = json.Port;
+        Desc = json.Desc;
         
     }
 

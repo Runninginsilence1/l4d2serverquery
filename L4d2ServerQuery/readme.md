@@ -56,6 +56,17 @@ dotnet L4d2ServerQuery.dll --urls "http://*:6000"
 增加tag model的迁移
 dotnet ef migrations add AddTagModel
 
+# 反向工程
+
+文档示例
+```shell
+dotnet ef dbcontext scaffold "Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=Chinook" Microsoft.EntityFrameworkCore.SqlServer
+```
+
+sqlite3 示例
+dotnet ef dbcontext scaffold "Data Source=C:\Users\zzk\AppData\Local\db.db" Microsoft.EntityFrameworkCore.Sqlite
+
+
 
 
 # 通过task实现自动上传
@@ -77,3 +88,4 @@ tasks:
       - scp -r bin/Release/net8.0/publish/* root@121.37.157.126:/var/www/zzk
       - echo "Release Complete!"
 ```
+

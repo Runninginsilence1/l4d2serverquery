@@ -3,9 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace L4d2ServerQuery.Data;
 
-public class ServerContext: DbContext
+public class ServerContext : DbContext
 {
-    
     public DbSet<FavoriteServer> FavoriteServers { get; set; }
     public DbSet<Tag> Tags { get; set; }
 
@@ -23,6 +22,4 @@ public class ServerContext: DbContext
     // 重写下面的方法, 使得EF可以创建SQLite数据库文件
     protected override void OnConfiguring(DbContextOptionsBuilder options)
         => options.UseSqlite($"Data Source={DbPath}");
-    
-    
 }

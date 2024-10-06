@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using SteamQuery.Models;
 
 namespace L4d2ServerQuery.Model;
@@ -11,6 +12,10 @@ public class ServerStatusDto
     public string? Map { get; set; }
     public int OnlinePlayers { get; set; }
     public int MaxPlayers { get; set; }
+    
+    public string? LastQueryTimeString { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public DateTime LastQueryTime { get; set; }
 
     public ServerStatusDto() {}
 
@@ -23,6 +28,8 @@ public class ServerStatusDto
         Map = information?.Map;
         OnlinePlayers = information?.OnlinePlayers?? 0;
         MaxPlayers = information?.MaxPlayers?? 0;
+        LastQueryTime = favoriteServer.LastQueryAt;
+        LastQueryTimeString = favoriteServer.LastQueryAt.ToString("yyyy-MM-dd HH:mm:ss");
     }
 }
 

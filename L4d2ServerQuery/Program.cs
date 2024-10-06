@@ -33,7 +33,6 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     }
 );
 
-
 // 添加 CORS 服务
 builder.Services.AddCors(options =>
 {
@@ -55,16 +54,37 @@ builder.Services.AddSwaggerGen();
 // 操, 我还以为是一个 context 和一个数据库模型绑定
 
 builder.Services.AddDbContext<ServerContext>();
-// builder.Services.AddDbContext<TagContext>();
-// builder.Services.AddDbContext<ExcludedServerContext>();
 
 var app = builder.Build();
 
+
+// 数据库迁移相关的代码
 using (var scope = app.Services.CreateScope())
 {
 // handle db context
 
     var context = scope.ServiceProvider.GetRequiredService<ServerContext>();
+    
+    // {
+    //     Log.Warning("清除了数据库");
+    //     context.Database.EnsureDeleted();
+    //     context.Database.EnsureCreated();    
+    // }
+
+
+    var queryNum = context.FavoriteServers.Count();
+    // 如果数据库中没有任何数据, 则尝试导入数据
+    if (queryNum == 0)
+    {
+        Log.Warning("数据库中没有任何数据");
+        Log.Information("尝试导入数据");
+        DataTransformHighway.Import(Path.Join(GetLocalAppDataPath(), "data.json"));
+        Log.Information("导入数据成功");
+    }
+    else
+    {
+        Log.Information($"数据库中有 {queryNum} 条数据");
+    }
 
     
     // 使用代码完成迁移
@@ -90,10 +110,6 @@ using (var scope = app.Services.CreateScope())
     //     }    
     // }
 
-    {
-        context.Database.EnsureDeleted();
-        context.Database.EnsureCreated();    
-    }
     
     // 自动重建然后删除表
     
@@ -230,6 +246,28 @@ app.MapPost("/servers/add", async (AddServerRequest request, ServerContext db) =
     .WithName("增加服务器")
     .WithOpenApi();
 
+// 更新服务器的数据
+// 现在就把他的数据更新最新时间即可
+
+app.MapGet("/serverDelete/{id}", async (int id, ServerContext db) =>
+    {
+        // 从数据库中查询: 查询单个数据使用 single, 使用 lambda 表达式来指定条件
+        // 注意处理 NotFound异常
+        try
+        {
+            FavoriteServer server = db.FavoriteServers.Single(s => s.Id == id);
+            server.LastQueryAt = DateTime.Now;
+            await db.SaveChangesAsync();
+            return Results.Ok();
+        }
+        catch (InvalidOperationException)
+        {
+            return Results.NotFound();
+        }
+    })
+    .WithName("更新最后复制时间")
+    .WithOpenApi();
+
 // 标准的删除步骤
 app.MapDelete("/serverDelete/{id}", async (int id, ServerContext db) =>
 {
@@ -250,9 +288,8 @@ app.MapDelete("/serverDelete/{id}", async (int id, ServerContext db) =>
 })
 .WithName("删除服务器");
 
-var stopwatch = new Stopwatch();
 
-app.MapGet("/serverList/{id}", async (int? id, ServerContext db) =>
+app.MapGet("/serverList", async (int? id, ServerContext db) =>
     {
         List<FavoriteServer> servers;
 
@@ -281,6 +318,59 @@ app.MapGet("/serverList/{id}", async (int? id, ServerContext db) =>
     .WithName("查询服务器列表")
     .WithOpenApi();
 
+// 这个备用留着
+app.MapGet("/serverList/{id}", async (int? id, ServerContext db) =>
+    {
+        List<FavoriteServer> servers;
+
+        if (id is null or 0)
+        {
+            servers = db.FavoriteServers.ToList();
+        }
+        else
+        {
+            // 可能会有没有找到的异常
+            try
+            {
+                var single = db.Tags.Single(t => t.Id == id);
+                servers = single.Servers.ToList();
+            }
+            catch (InvalidOperationException e)
+            {
+                Console.WriteLine(e);
+                return Results.NotFound();
+            }
+        }
+
+        var result = await QueryService.Query(servers);
+        return Results.Ok(result);
+    })
+    .WithName("查询服务器列表WithTagId")
+    .WithOpenApi();
+
+// 根据ip查询玩家的名字的接口, 这个因为前端的原因所以没写
+app.MapGet("/playerList/{id:int}", async (int id, ServerContext db) =>
+    {
+        // 从数据库中查询: 查询单个数据使用 single, 使用 lambda 表达式来指定条件
+        // 注意处理 NotFound异常
+        try
+        {
+            FavoriteServer server = db.FavoriteServers.Single(s => s.Id == id);
+
+            return Results.Ok(await QueryService.QueryPlayers(server.Addr));
+        }
+        catch (InvalidOperationException)
+        {
+            return Results.NotFound();
+        }
+    })
+    .WithName("查询服务器中的玩家信息");
+
+
+// 判断db是否有数据: 
+
+
+
 app.Run();
 
 
@@ -297,5 +387,13 @@ void PrintDbPath()
     var folder = Environment.SpecialFolder.LocalApplicationData;
     var path = Environment.GetFolderPath(folder);
     var dbPath = Path.Join(path, "db.db");
+    // C:\Users\zzk\AppData\Local
     Log.Information($"数据库的路径在: {dbPath}");   
+}
+
+string GetLocalAppDataPath()
+{
+    var folder = Environment.SpecialFolder.LocalApplicationData;
+    var path = Environment.GetFolderPath(folder);
+    return path;
 }

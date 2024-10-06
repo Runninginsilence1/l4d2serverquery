@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using L4d2ServerQuery.DTO;
 using L4d2ServerQuery.Model;
 using Serilog;
 using SteamQuery;
@@ -62,6 +63,7 @@ public static class QueryService
                     //     MaxPlayers = info.MaxPlayers,
                     // };
 
+
                     var s = new ServerStatusDto(server, info);
 
                     status.Add(s);
@@ -71,16 +73,43 @@ public static class QueryService
                     Console.WriteLine($"{host} 无法连接");
                 }
             }));
-            
-            
         }
+
         await Task.WhenAll(tasks);
 
         const int expectedPlayers = 8;
 
-        var result = status.OrderBy(s => Math.Abs(s.OnlinePlayers - expectedPlayers)).ToList();
+        var result = status.
+            OrderBy(s => Math.Abs(s.OnlinePlayers - expectedPlayers)).
+            ThenBy(s => s.LastQueryTime).
+            ToList();
         Stopwatch.Stop();
         Console.WriteLine($"查询了 {count} 个服务器, 用时: {Stopwatch.ElapsedMilliseconds} ms");
         return result;
+    }
+
+    public static async Task<List<PlayerListDto>> QueryPlayers(string addr)
+    {
+        GameServer gameServer;
+        try
+        {
+            gameServer = new GameServer(addr)
+            {
+                SendTimeout = 3000,
+                ReceiveTimeout = 3000,
+            };
+        }
+        catch (AddressNotFoundException e)
+        {
+            // Console.WriteLine($"{host} 是一个无效的地址");
+            Log.Warning($"{addr} 是一个无效的地址");
+            throw;
+        }
+
+        var steamQueryPlayers = await gameServer.GetPlayersAsync();
+        // 没有为结果数据生成id, 因为没有必要
+        var playerListDtos = steamQueryPlayers.Select(p => new PlayerListDto(p));
+
+        return playerListDtos.ToList();
     }
 }
