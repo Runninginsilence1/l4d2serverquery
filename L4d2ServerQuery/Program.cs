@@ -249,7 +249,7 @@ app.MapPost("/servers/add", async (AddServerRequest request, ServerContext db) =
 // 更新服务器的数据
 // 现在就把他的数据更新最新时间即可
 
-app.MapGet("/serverDelete/{id}", async (int id, ServerContext db) =>
+app.MapGet("/lastCopyTimeUpdate/{id}", async (int id, ServerContext db) =>
     {
         // 从数据库中查询: 查询单个数据使用 single, 使用 lambda 表达式来指定条件
         // 注意处理 NotFound异常
@@ -289,28 +289,30 @@ app.MapDelete("/serverDelete/{id}", async (int id, ServerContext db) =>
 .WithName("删除服务器");
 
 
-app.MapGet("/serverList", async (int? id, ServerContext db) =>
+app.MapGet("/serverList", async (ServerContext db) =>
     {
         List<FavoriteServer> servers;
+        
+        servers = db.FavoriteServers.ToList();
 
-        if (id is null or 0)
-        {
-            servers = db.FavoriteServers.ToList();
-        }
-        else
-        {
-            // 可能会有没有找到的异常
-            try
-            {
-                var single = db.Tags.Single(t => t.Id == id);
-                servers = single.Servers.ToList();
-            }
-            catch (InvalidOperationException e)
-            {
-                Console.WriteLine(e);
-                return Results.NotFound();
-            }
-        }
+        // if (id is null or 0)
+        // {
+        //     servers = db.FavoriteServers.ToList();
+        // }
+        // else
+        // {
+        //     // 可能会有没有找到的异常
+        //     try
+        //     {
+        //         var single = db.Tags.Single(t => t.Id == id);
+        //         servers = single.Servers.ToList();
+        //     }
+        //     catch (InvalidOperationException e)
+        //     {
+        //         Console.WriteLine(e);
+        //         return Results.NotFound();
+        //     }
+        // }
 
         var result = await QueryService.Query(servers);
         return Results.Ok(result);
@@ -318,35 +320,35 @@ app.MapGet("/serverList", async (int? id, ServerContext db) =>
     .WithName("查询服务器列表")
     .WithOpenApi();
 
-// 这个备用留着
-app.MapGet("/serverList/{id}", async (int? id, ServerContext db) =>
-    {
-        List<FavoriteServer> servers;
-
-        if (id is null or 0)
-        {
-            servers = db.FavoriteServers.ToList();
-        }
-        else
-        {
-            // 可能会有没有找到的异常
-            try
-            {
-                var single = db.Tags.Single(t => t.Id == id);
-                servers = single.Servers.ToList();
-            }
-            catch (InvalidOperationException e)
-            {
-                Console.WriteLine(e);
-                return Results.NotFound();
-            }
-        }
-
-        var result = await QueryService.Query(servers);
-        return Results.Ok(result);
-    })
-    .WithName("查询服务器列表WithTagId")
-    .WithOpenApi();
+// // 这个备用留着
+// app.MapGet("/serverList/{id}", async (int? id, ServerContext db) =>
+//     {
+//         List<FavoriteServer> servers;
+//
+//         if (id is null or 0)
+//         {
+//             servers = db.FavoriteServers.ToList();
+//         }
+//         else
+//         {
+//             // 可能会有没有找到的异常
+//             try
+//             {
+//                 var single = db.Tags.Single(t => t.Id == id);
+//                 servers = single.Servers.ToList();
+//             }
+//             catch (InvalidOperationException e)
+//             {
+//                 Console.WriteLine(e);
+//                 return Results.NotFound();
+//             }
+//         }
+//
+//         var result = await QueryService.Query(servers);
+//         return Results.Ok(result);
+//     })
+//     .WithName("查询服务器列表WithTagId")
+//     .WithOpenApi();
 
 // 根据ip查询玩家的名字的接口, 这个因为前端的原因所以没写
 app.MapGet("/playerList/{id:int}", async (int id, ServerContext db) =>

@@ -15,7 +15,7 @@ public class ServerStatusDto
     
     public string? LastQueryTimeString { get; set; }
     [System.Text.Json.Serialization.JsonIgnore]
-    public DateTime LastQueryTime { get; set; }
+    public DateTime? LastQueryTime { get; set; }
 
     public ServerStatusDto() {}
 
