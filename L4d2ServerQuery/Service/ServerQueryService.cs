@@ -35,8 +35,8 @@ public static class QueryService
             {
                 gameServer = new GameServer(host)
                 {
-                    SendTimeout = 3000,
-                    ReceiveTimeout = 3000,
+                    SendTimeout = 1000,
+                    ReceiveTimeout = 1000,
                 };
             }
             catch (AddressNotFoundException e)
@@ -81,8 +81,12 @@ public static class QueryService
 
         var result = status.
             OrderBy(s => Math.Abs(s.OnlinePlayers - expectedPlayers)).
-            ThenBy(s => s.LastQueryTime).
+            ThenByDescending(s => s.LastQueryTime, new DateTimeComparer()).
             ToList();
+        
+        // 网上看的, 使用 sort 另外排序, 不使用 linq
+        // result.Sort((s1, s2) => DateTime.Compare(s1.LastQueryTime?? DateTime.MinValue, s2.LastQueryTime?? DateTime.MinValue)); // 使用问号操作符做常量值
+        
         Stopwatch.Stop();
         Console.WriteLine($"查询了 {count} 个服务器, 用时: {Stopwatch.ElapsedMilliseconds} ms");
         return result;
@@ -111,5 +115,28 @@ public static class QueryService
         var playerListDtos = steamQueryPlayers.Select(p => new PlayerListDto(p));
 
         return playerListDtos.ToList();
+    }
+}
+
+// 定义自定义的比较器, 用来排序时间
+class DateTimeComparer : IComparer<DateTime?>
+{
+    
+    public int Compare(DateTime? x, DateTime? y)
+    {
+        // 如果 x 为空，则视为小于 y（除非 y 也为空）
+        if (x == null)
+        {
+            return y == null ? 0 : -1;
+        }
+
+        // 如果 y 为空，则视为大于 x
+        if (y == null)
+        {
+            return 1;
+        }
+
+        // 如果都不为空，则使用 DateTime 默认的比较规则
+        return x.Value.CompareTo(y.Value);
     }
 }

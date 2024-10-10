@@ -29,7 +29,7 @@ public class ServerStatusDto
         OnlinePlayers = information?.OnlinePlayers?? 0;
         MaxPlayers = information?.MaxPlayers?? 0;
         LastQueryTime = favoriteServer.LastQueryAt;
-        LastQueryTimeString = favoriteServer.LastQueryAt.ToString("yyyy-MM-dd HH:mm:ss");
+        LastQueryTimeString = favoriteServer.LastQueryAt?.ToString("yyyy-MM-dd HH:mm:ss");
     }
 }
 

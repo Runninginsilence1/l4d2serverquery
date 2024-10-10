@@ -60,7 +60,7 @@ public class FavoriteServer
     public string Addr => $"{Host}:{Port}";
     
     // 最后连接时间，用于作为排序的依据
-    public DateTime LastQueryAt { get; set; }
+    public DateTime? LastQueryAt { get; set; }
     
     // 关联
     // 可空类型表示外键关联不是必须的
