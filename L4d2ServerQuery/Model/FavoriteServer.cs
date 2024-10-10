@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using L4d2ServerQuery.Request;
 using Microsoft.EntityFrameworkCore;
@@ -40,6 +41,8 @@ dotnet ef database update
 // 数据库实体
 
 
+
+
 public class FavoriteServer
 {
     
@@ -61,6 +64,24 @@ public class FavoriteServer
     
     // 最后连接时间，用于作为排序的依据
     public DateTime? LastQueryAt { get; set; }
+    
+    // 查询字段，在查询后，调用这个方法， 将包含指定关键字的信息的修改指定描述
+    public string? ServerName { get; set; }
+
+    
+    public void UpdateServerName(string? serverName)
+    {
+        
+        ServerName = serverName;
+        
+        // 一些特殊的先直接过滤
+        if (string.IsNullOrEmpty(Desc) || !Desc.Contains("默认"))
+        {
+            return;
+        }
+        
+        if (serverName.Contains("萌新聚集地")) {}
+    }
     
     // 关联
     // 可空类型表示外键关联不是必须的

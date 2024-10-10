@@ -22,4 +22,15 @@ public class ServerContext : DbContext
     // 重写下面的方法, 使得EF可以创建SQLite数据库文件
     protected override void OnConfiguring(DbContextOptionsBuilder options)
         => options.UseSqlite($"Data Source={DbPath}");
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        builder.Entity<Tag>()
+            .HasData(
+                new Tag("萌新聚集地") { Id = 1, RankSort = 8},
+                new Tag("芙芙の小屋") { Id = 2, RankSort = 8},
+                new Tag("HN") { Id = 3, RankSort = 8}
+            );
+    }
+
 }
