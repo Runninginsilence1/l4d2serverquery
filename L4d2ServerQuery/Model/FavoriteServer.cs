@@ -108,6 +108,10 @@ public class FavoriteServer
     public FavoriteServer(AddServerRequest request)
     {
         int lastIndexOf = request.Addr.LastIndexOf(":", StringComparison.Ordinal);
+        if (lastIndexOf == -1)
+        {
+            throw new Exception("无效的Addr: 没有冒号");
+        }
         Host = request.Addr.Substring(0, lastIndexOf);
         Port = int.Parse(request.Addr.Substring(lastIndexOf + 1));
         

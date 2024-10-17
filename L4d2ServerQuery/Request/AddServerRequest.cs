@@ -9,5 +9,5 @@ public class AddServerRequest
     [Required]
     public string Addr { get; set; }
     
-    public List<int> Tags { get; set; }
+    // public List<int> Tags { get; set; }
 }

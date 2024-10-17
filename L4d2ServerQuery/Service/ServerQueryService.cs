@@ -91,6 +91,82 @@ public static class QueryService
         Console.WriteLine($"查询了 {count} 个服务器, 用时: {Stopwatch.ElapsedMilliseconds} ms");
         return result;
     }
+    
+    public static async Task<List<ServerStatusDto>> Query(List<FavoriteServer> servers, int rank)
+    {
+        var status = new List<ServerStatusDto>();
+        var tasks = new List<Task>();
+        var count = 0;
+
+        Stopwatch.Restart();
+
+        foreach (var server in servers)
+        {
+            var host = server.Addr;
+
+            GameServer gameServer;
+
+            try
+            {
+                gameServer = new GameServer(host)
+                {
+                    SendTimeout = 1000,
+                    ReceiveTimeout = 1000,
+                };
+            }
+            catch (AddressNotFoundException e)
+            {
+                // Console.WriteLine($"{host} 是一个无效的地址");
+                Log.Warning($"{host} 是一个无效的地址");
+                continue;
+            }
+
+
+            tasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    var info = await gameServer.GetInformationAsync();
+                    count++;
+                    // var s = new ServerStatusDto()
+                    // {
+                    //     Id = server.Id,
+                    //     Address = host,
+                    //     ServerName = info.ServerName,
+                    //     Map = info.Map,
+                    //     OnlinePlayers = info.OnlinePlayers,
+                    //     MaxPlayers = info.MaxPlayers,
+                    // };
+
+
+                    var s = new ServerStatusDto(server, info);
+
+                    status.Add(s);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"{host} 无法连接");
+                }
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+
+        int expectedPlayers = 8;
+        expectedPlayers = rank;
+
+        var result = status.
+            OrderBy(s => Math.Abs(s.OnlinePlayers - expectedPlayers)).
+            ThenByDescending(s => s.LastQueryTime, new DateTimeComparer()).
+            ToList();
+        
+        // 网上看的, 使用 sort 另外排序, 不使用 linq
+        // result.Sort((s1, s2) => DateTime.Compare(s1.LastQueryTime?? DateTime.MinValue, s2.LastQueryTime?? DateTime.MinValue)); // 使用问号操作符做常量值
+        
+        Stopwatch.Stop();
+        Console.WriteLine($"查询了 {count} 个服务器, 用时: {Stopwatch.ElapsedMilliseconds} ms");
+        return result;
+    }
 
     public static async Task<List<PlayerListDto>> QueryPlayers(string addr)
     {
