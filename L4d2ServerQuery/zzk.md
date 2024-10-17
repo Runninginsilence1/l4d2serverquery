@@ -1,5 +1,5 @@
 # 提交项目
-git commit -a -m "分类查询的接口，下一步是把他的crud弄出来"
+git commit -a -m "增加了去重的接口"
 git push
 
 # 部署项目

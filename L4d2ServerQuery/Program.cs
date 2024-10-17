@@ -1,6 +1,3 @@
-using System.Buffers;
-using System.Diagnostics;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using L4d2ServerQuery;
 using L4d2ServerQuery.Data;
@@ -9,8 +6,6 @@ using L4d2ServerQuery.Request;
 using L4d2ServerQuery.Service;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using SteamQuery;
-using SteamQuery.Exceptions;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -214,23 +209,50 @@ app.UseCors("AllowAllOrigins");
 }
 
 // 测试接口, 显示所有的服务器数据
-app.MapGet("/servers", (ServerContext db) =>
+app.MapGet("/debug/allServers", (ServerContext db) =>
     {
-        var res = db.FavoriteServers.Include(s => s.Tag).ToList();
-
-
+        var res = db.FavoriteServers
+            // .Include(s => s.Tag)
+            .ToList();
+        
         // 直接适用关键的方式来查询
         // var query = from s in db.FavoriteServers
         //     join t in db.Tags on s.TagId equals t.Id
         //     select new {s, t};
         //
         // var res = query.ToList();
+        var res1 = new { Count = res.Count, Servers = res };
         
-        return Results.Ok(res);
+        
+        return Results.Ok(res1);
     })
     .WithName("查询所有服务器")
     .WithOpenApi();
 
+// 测试接口, 基于 DistinctBy 去重
+// Expect api用于清除重复服务器
+app.MapGet("/debug/cleanServers", async (ServerContext db) =>
+    {
+        // 查询所有服务器
+        var allServers = await db.FavoriteServers.ToListAsync();
+
+        // 使用 DistinctBy 方法去除重复的服务器
+        var newServers = allServers.DistinctBy(s => s.Addr).ToList();
+
+        // 删除数据库中未在去重列表中的服务器
+        var serversToRemove = allServers.Except(newServers).ToList();
+        foreach (var server in serversToRemove)
+        {
+            db.FavoriteServers.Remove(server);
+        }
+
+        // 保存更改
+        await db.SaveChangesAsync();
+
+        return Results.Ok(new { Message = "重复服务器已去除", Count = serversToRemove.Count });
+    })
+    .WithName("去除重复服务器")
+    .WithOpenApi();
 // 似乎直接在 lambda 表达式中指定 参数就可以了
 // 可选：指定tag的id
 // 别管tag了
@@ -563,7 +585,7 @@ app.MapGet("/playerList/{id:int}", async (int id, ServerContext db) =>
 
 // 判断db是否有数据: 
 
-const string buildTimeString = "2024年10月17日17:47:26";
+const string buildTimeString = "2022-01-10 16:00:00";
 
 Log.Information($"最后编译时间: {buildTimeString}");
 
