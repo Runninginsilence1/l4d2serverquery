@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json.Serialization;
 using L4d2ServerQuery;
 using L4d2ServerQuery.Data;
@@ -208,6 +209,23 @@ app.UseCors("AllowAllOrigins");
 
 }
 
+// 测试接口, 从文本中读取并添加
+// 记得删除
+// app.MapGet("/debug/readserverstxt", (ServerContext db) =>
+// {
+//     var path = Path.Join(GetLocalAppDataPath(), "servers.txt");
+//     var readAllLines = File.ReadAllLines(path);
+//     Log.Information($"读取了{readAllLines.Length}条服务器信息");
+//     foreach (var line in readAllLines)
+//     {
+//         var server = new FavoriteServer(line);
+//         db.FavoriteServers.Add(server);
+//     }
+//     db.SaveChanges();
+//     Log.Information($"成功导入{readAllLines.Length}条服务器信息, 现在服务器数量为: {db.FavoriteServers.Count()}");
+//     return Results.Ok();
+// });
+
 // 测试接口, 显示所有的服务器数据
 app.MapGet("/debug/allServers", (ServerContext db) =>
     {
@@ -253,12 +271,26 @@ app.MapGet("/debug/cleanServers", async (ServerContext db) =>
     })
     .WithName("去除重复服务器")
     .WithOpenApi();
-// 似乎直接在 lambda 表达式中指定 参数就可以了
-// 可选：指定tag的id
-// 别管tag了
-// 弄一个no tag 版本
+
 app.MapPost("/servers/add", async (AddServerRequest request, ServerContext db) =>
     {
+        // request 预处理
+        request.Addr = request.Addr.Trim();
+        var connPrefix = "connect ";
+        if (request.Addr.StartsWith(connPrefix))
+        {
+            request.Addr = request.Addr.Substring(connPrefix.Length);
+        }
+        
+        
+        
+        // 从 去除 connect 前缀
+        
+        
+
+
+                
+        
         // 捕获初始化异常
         FavoriteServer server;
         try
@@ -492,6 +524,14 @@ app.MapPost("/serverList/v2", async (QueryOption option, ServerContext db) =>
     .WithName("查询服务器列表v2")
     .WithOpenApi();
 
+// 调整排序规则
+app.MapGet("/config/rank/{rank}", (int rank) =>
+{
+    RankStore.Rank = rank;
+    return Results.Ok();
+});
+
+
 // 自动校对服务器与tag的连接
 // 通过 serverName 与服务器的 Tag 字段相互匹配
 app.MapGet("/debug/fixTag", async (ServerContext db) =>
@@ -602,8 +642,7 @@ void Init()
 
 void PrintDbPath()
 {
-    var folder = Environment.SpecialFolder.LocalApplicationData;
-    var path = Environment.GetFolderPath(folder);
+    var path = GetLocalAppDataPath();
     var dbPath = Path.Join(path, "db.db");
     // C:\Users\zzk\AppData\Local
     Log.Information($"数据库的路径在: {dbPath}");   

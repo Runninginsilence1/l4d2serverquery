@@ -77,7 +77,8 @@ public static class QueryService
 
         await Task.WhenAll(tasks);
 
-        const int expectedPlayers = 8;
+        int expectedPlayers = 8;
+        expectedPlayers = RankStore.Rank;
 
         var result = status.
             OrderBy(s => Math.Abs(s.OnlinePlayers - expectedPlayers)).
@@ -195,6 +196,7 @@ public static class QueryService
 }
 
 // 定义自定义的比较器, 用来排序时间
+// 现在是时间越大的排越前面
 class DateTimeComparer : IComparer<DateTime?>
 {
     
@@ -203,16 +205,15 @@ class DateTimeComparer : IComparer<DateTime?>
         // 如果 x 为空，则视为小于 y（除非 y 也为空）
         if (x == null)
         {
-            return y == null ? 0 : -1;
+            return y == null ? 0 : 1;
         }
-
-        // 如果 y 为空，则视为大于 x
+        
         if (y == null)
         {
             return 1;
         }
 
         // 如果都不为空，则使用 DateTime 默认的比较规则
-        return x.Value.CompareTo(y.Value);
+        return -1 * x.Value.CompareTo(y.Value);
     }
 }

@@ -117,6 +117,21 @@ public class FavoriteServer
         
         Desc = request.Desc;
     }
+    
+    public FavoriteServer(string addr)
+    {
+        addr = addr.Trim();
+        
+        int lastIndexOf = addr.LastIndexOf(":", StringComparison.Ordinal);
+        if (lastIndexOf == -1)
+        {
+            throw new Exception("无效的Addr: 没有冒号");
+        }
+        Host = addr.Substring(0, lastIndexOf);
+        Port = int.Parse(addr.Substring(lastIndexOf + 1));
+        
+        Desc = "通过文件添加";
+    }
     public FavoriteServer(string host, int port)
     {
         Host = host;
