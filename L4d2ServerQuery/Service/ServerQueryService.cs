@@ -46,13 +46,13 @@ public static class QueryService
                 continue;
             }
 
-
             tasks.Add(Task.Run(async () =>
             {
                 try
                 {
                     var info = await gameServer.GetInformationAsync();
                     count++;
+                    
                     // var s = new ServerStatusDto()
                     // {
                     //     Id = server.Id,

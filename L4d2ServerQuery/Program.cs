@@ -59,9 +59,8 @@ using (var scope = app.Services.CreateScope())
 // handle db context
 
     var context = scope.ServiceProvider.GetRequiredService<ServerContext>();
-    
-    
-    
+
+
     // 这里用于处理数据库的自动更新
 
     int queryNum = 0;
@@ -69,11 +68,12 @@ using (var scope = app.Services.CreateScope())
     {
         var queryNum1 = context.FavoriteServers.Count();
         var queryNum2 = context.Tags.Count();
-        
+
         queryNum = queryNum1 * queryNum2;
-        
+
         // 如果数据库中没有任何数据, 则尝试导入数据
-    } catch (Exception e)
+    }
+    catch (Exception e)
     {
         // Log.Error($"查询时出现异常:\n{e.Message}");
         // {
@@ -90,10 +90,10 @@ using (var scope = app.Services.CreateScope())
         {
             Log.Warning("清除了数据库");
             context.Database.EnsureDeleted();
-            context.Database.EnsureCreated();    
+            context.Database.EnsureCreated();
         }
 
-        
+
         Log.Warning("数据库中没有任何数据");
         Log.Information("尝试导入数据");
         DataTransformHighway.Import(Path.Join(GetLocalAppDataPath(), "data.json"));
@@ -104,12 +104,11 @@ using (var scope = app.Services.CreateScope())
         Log.Information($"数据库中有 {queryNum} 条数据");
     }
 
-    
+
     // 使用代码完成迁移
     {
         // 最好不要在这里迁移
         // await context.Database.MigrateAsync();
-    
     }
 
     // 而是检查有没有待迁移的内容
@@ -128,10 +127,8 @@ using (var scope = app.Services.CreateScope())
     //     }    
     // }
 
-    
-    // 自动重建然后删除表
-    
 
+    // 自动重建然后删除表
 }
 
 
@@ -153,10 +150,10 @@ app.UseCors("AllowAllOrigins");
 
 // 使用 restful api 风格的路由
 {
-    app.MapGet("/tags", (ServerContext db) => db.Tags.Select(t => new {t.Id, t.Name, t.Servers}))
+    app.MapGet("/tags", (ServerContext db) => db.Tags.Select(t => new { t.Id, t.Name, t.Servers }))
         .WithName("获取所有标签")
         .WithOpenApi();
-    
+
     app.MapPost("/tags/add", async (TagRequest request, ServerContext db) =>
         {
             var tag = new Tag(request.Name)
@@ -165,25 +162,25 @@ app.UseCors("AllowAllOrigins");
                 // Name = request.Name,
                 RankSort = request.RankSort
             };
-            
+
             db.Tags.Add(tag);
             await db.SaveChangesAsync();
             return Results.Ok();
         })
         .WithName("新增一个标签")
         .WithOpenApi();
-    
+
     // 这个实际上是新增服务器的时候应该绑定的, 写在tag的api这里了
     // 这个没有api文档
     app.MapPost("/tag/addList", (QueryOption tagList) =>
-    {
-        // IEnumerable<Tag> tags = tagList.Tags.Select(t => new Tag(t));
-        // Log.Information("尝试解析Tag");
-        // string serialize = JsonSerializer.Serialize(tags);
-        // Console.WriteLine(serialize);
-    }).WithName("新增多个标签")
-    .WithOpenApi();
-    
+        {
+            // IEnumerable<Tag> tags = tagList.Tags.Select(t => new Tag(t));
+            // Log.Information("尝试解析Tag");
+            // string serialize = JsonSerializer.Serialize(tags);
+            // Console.WriteLine(serialize);
+        }).WithName("新增多个标签")
+        .WithOpenApi();
+
     app.MapDelete("/deleteTag/{id:int}", async (int id, ServerContext db) =>
     {
         // 从数据库中查询: 查询单个数据使用 single, 使用 lambda 表达式来指定条件
@@ -205,8 +202,7 @@ app.UseCors("AllowAllOrigins");
         {
             return Results.NotFound();
         }
-    });    
-
+    });
 }
 
 // 测试接口, 从文本中读取并添加
@@ -232,7 +228,7 @@ app.MapGet("/debug/allServers", (ServerContext db) =>
         var res = db.FavoriteServers
             // .Include(s => s.Tag)
             .ToList();
-        
+
         // 直接适用关键的方式来查询
         // var query = from s in db.FavoriteServers
         //     join t in db.Tags on s.TagId equals t.Id
@@ -240,8 +236,8 @@ app.MapGet("/debug/allServers", (ServerContext db) =>
         //
         // var res = query.ToList();
         var res1 = new { Count = res.Count, Servers = res };
-        
-        
+
+
         return Results.Ok(res1);
     })
     .WithName("查询所有服务器")
@@ -281,16 +277,11 @@ app.MapPost("/servers/add", async (AddServerRequest request, ServerContext db) =
         {
             request.Addr = request.Addr.Substring(connPrefix.Length);
         }
-        
-        
-        
+
+
         // 从 去除 connect 前缀
-        
-        
 
 
-                
-        
         // 捕获初始化异常
         FavoriteServer server;
         try
@@ -304,14 +295,14 @@ app.MapPost("/servers/add", async (AddServerRequest request, ServerContext db) =
             Log.Error(e, "异常信息");
             throw;
         }
-        
+
         Log.Information($"待添加的服务器信息: {server}");
 
         server.CreateAt = DateTime.Now;
-        
+
         // 不处理分类
         db.FavoriteServers.Add(server);
-        
+
         // 如果处理分类
         // foreach (int tagId in request.Tags)
         // {
@@ -333,7 +324,7 @@ app.MapPost("/servers/add", async (AddServerRequest request, ServerContext db) =
         //     }
         //
         // }
-        
+
         await db.SaveChangesAsync();
         Log.Information($"添加了新的服务器, 当前服务器数量为: {db.FavoriteServers.Count()}");
         return Results.Ok();
@@ -365,29 +356,29 @@ app.MapGet("/lastCopyTimeUpdate/{id}", async (int id, ServerContext db) =>
 
 // 标准的删除步骤
 app.MapDelete("/serverDelete/{id}", async (int id, ServerContext db) =>
-{
-    // 从数据库中查询: 查询单个数据使用 single, 使用 lambda 表达式来指定条件
-    // 注意处理 NotFound异常
-    try
     {
-        FavoriteServer server = db.FavoriteServers.Single(s => s.Id == id);
-        db.Remove(server);
-        await db.SaveChangesAsync();
-        Log.Information($"删除了新的服务器, 当前服务器数量为: {db.FavoriteServers.Count()}");
-        return Results.Ok();
-    }
-    catch (InvalidOperationException)
-    {
-        return Results.NotFound();
-    }
-})
-.WithName("删除服务器");
+        // 从数据库中查询: 查询单个数据使用 single, 使用 lambda 表达式来指定条件
+        // 注意处理 NotFound异常
+        try
+        {
+            FavoriteServer server = db.FavoriteServers.Single(s => s.Id == id);
+            db.Remove(server);
+            await db.SaveChangesAsync();
+            Log.Information($"删除了新的服务器, 当前服务器数量为: {db.FavoriteServers.Count()}");
+            return Results.Ok();
+        }
+        catch (InvalidOperationException)
+        {
+            return Results.NotFound();
+        }
+    })
+    .WithName("删除服务器");
 
 
 app.MapGet("/serverList", async (ServerContext db) =>
     {
         List<FavoriteServer> servers;
-        
+
         servers = db.FavoriteServers.ToList(); // 直接获取所有的服务器
 
         // 根据传输的id来获取
@@ -412,7 +403,7 @@ app.MapGet("/serverList", async (ServerContext db) =>
 
         var result = await QueryService.Query(servers);
 
-        
+
         // result是需要返回的
         // todo: 这里跑一次就行了，记得注释掉
 
@@ -449,10 +440,8 @@ app.MapGet("/serverList", async (ServerContext db) =>
         //     Log.Information($"成功处理了{counter}个服务器。, 仍有{total - counter}个服务器未处理");
         //     db.SaveChanges();   
         // }
-        
-        
 
-        
+
         return Results.Ok(result);
     })
     .WithName("查询服务器列表")
@@ -466,7 +455,6 @@ app.MapPost("/serverList/v2", async (QueryOption option, ServerContext db) =>
         List<FavoriteServer> servers = new List<FavoriteServer>();
         foreach (var id in option.Tags)
         {
-            
             // 根据传输的id来获取
             if (id is 0)
             {
@@ -477,9 +465,7 @@ app.MapPost("/serverList/v2", async (QueryOption option, ServerContext db) =>
                 // 可能会有没有找到的异常
                 try
                 {
-                    var single = db.Tags.
-                        Include(s => s.Servers).
-                        Single(t => t.Id == id);
+                    var single = db.Tags.Include(s => s.Servers).Single(t => t.Id == id);
                     servers.AddRange(single.Servers);
                 }
                 catch (InvalidOperationException e)
@@ -490,7 +476,7 @@ app.MapPost("/serverList/v2", async (QueryOption option, ServerContext db) =>
                 }
             }
         }
-        
+
         Log.Information($"查询了{servers.Count}个服务器");
 
         if (servers.Count == 0)
@@ -501,24 +487,19 @@ app.MapPost("/serverList/v2", async (QueryOption option, ServerContext db) =>
         List<ServerStatusDto> result;
         if (option.Rank is not null)
         {
-            var rank = option.Rank?? 8;
+            var rank = option.Rank ?? 8;
             result = await QueryService.Query(servers, rank);
         }
         else
         {
             result = await QueryService.Query(servers);
         }
-        
 
-        
+
         // result是需要返回的
         // todo: 这里跑一次就行了，记得注释掉
 
-        
-        
-        
 
-        
         return Results.Ok(result);
     })
     .WithName("查询服务器列表v2")
@@ -536,9 +517,8 @@ app.MapGet("/config/rank/{rank}", (int rank) =>
 // 通过 serverName 与服务器的 Tag 字段相互匹配
 app.MapGet("/debug/fixTag", async (ServerContext db) =>
 {
-    
     List<FavoriteServer> servers;
-        
+
     servers = db.FavoriteServers.ToList(); // 直接获取所有的服务器
 
     var result = await QueryService.Query(servers);
@@ -548,13 +528,10 @@ app.MapGet("/debug/fixTag", async (ServerContext db) =>
 
         result.ForEach(dto =>
         {
-
-
             var rawServer = db.FavoriteServers.Single(s1 => s1.Id == dto.Id);
             var tags = db.Tags.ToList();
             foreach (var tag in tags)
             {
-
                 if (dto.ServerName == null)
                 {
                     continue;
@@ -636,7 +613,7 @@ void Init()
 {
     Console.WriteLine("调用了Init");
     MyLogger.Init();
-    
+
     PrintDbPath();
 }
 
@@ -645,7 +622,7 @@ void PrintDbPath()
     var path = GetLocalAppDataPath();
     var dbPath = Path.Join(path, "db.db");
     // C:\Users\zzk\AppData\Local
-    Log.Information($"数据库的路径在: {dbPath}");   
+    Log.Information($"数据库的路径在: {dbPath}");
 }
 
 string GetLocalAppDataPath()
